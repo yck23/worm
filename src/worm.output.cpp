@@ -8,6 +8,7 @@ void worm::print_params(std::ostream& os) const {
 #endif
 #ifdef CAN_WINDOW
   os << "# config : CWINDOW                                  : yes\n";
+  os << "# canonical open-worm window                       : " << can_window << "\n";
 #else
   os << "# config : CWINDOW                                  : no\n";
 #endif
@@ -226,6 +227,7 @@ void worm::load(alps::hdf5::archive & ar) {
 
   std::cout << "...done. Computing potential energies...";
   Epot_tot = calc_potential_energy_nb() + calc_potential_energy_loc();
+  Epot_measure = calc_potential_energy_measure();
   std::cout << "...done.\n";
   cout << "# Potential Energy tot : " << Epot_tot << endl;
   std::cout << "\n# Finished loading.\n";

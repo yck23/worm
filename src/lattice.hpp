@@ -31,11 +31,16 @@ struct lattice {
     using DirectionIndex = size_t;
     using Direction = Eigen::Matrix<double, DIM, 1>;
     using NeighborType = std::map<DirectionIndex, SiteIndex>;
+#if defined(_WIN32)
+    using ParameterSize = unsigned long;
+#else
+    using ParameterSize = size_t;
+#endif
 
     static void define_parameters(alps::params& params) {
-        params.define<size_t>("Lx", 4, "number of unitcells along x axis of the lattice")
-              .define<size_t>("Ly", 1, "number of unitcells along y axis of the lattice")
-              .define<size_t>("Lz", 1, "number of unitcells along z axis of the lattice")
+        params.define<ParameterSize>("Lx", 4, "number of unitcells along x axis of the lattice")
+              .define<ParameterSize>("Ly", 1, "number of unitcells along y axis of the lattice")
+              .define<ParameterSize>("Lz", 1, "number of unitcells along z axis of the lattice")
               .define<bool>("pbcx", true, "periodic boundary condition along x axis (PBC:1, OBC:0)")
               .define<bool>("pbcy", true, "periodic boundary condition along y axis (PBC:1, OBC:0)")
               .define<bool>("pbcz", true, "periodic boundary condition along z axis (PBC:1, OBC:0)");

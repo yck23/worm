@@ -106,17 +106,25 @@ int main(int argc, char** argv) {
         alps::results_type<alps::mcmpiadapter<worm>>::type results = alps::collect_results(sim);
 
         if (is_master) {
-            std::cout << "# Simulation ran for " << results["Total_Energy"].count() 
-                      << " steps." << std::endl;
-            std::cout << "# Result:" << std::endl;
-            std::cout << results << std::endl;
+            const bool has_measurements =
+                results.size() && results["Total_Energy"].count() > 0;
+            if (has_measurements) {
+                std::cout << "# Simulation ran for " << results["Total_Energy"].count()
+                          << " steps." << std::endl;
+                std::cout << "# Result:" << std::endl;
+                std::cout << results << std::endl;
+            }
+            else {
+                std::cout << "# No production measurements were collected; "
+                          << "the run stopped during thermalization." << std::endl;
+            }
 
             std::string output_file = parameters["outputfile"].as<std::string>();
             try {
                 std::cout << "# Saving results to " << output_file << std::endl;
                 alps::hdf5::archive ar(output_file, "w");
                 ar["/parameters"] << parameters;
-                ar["/simulation/results"] << results;
+                if (has_measurements) ar["/simulation/results"] << results;
                 std::cout << "# Finished successfully.\n";
             }
             catch (const std::exception& e) {

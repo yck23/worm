@@ -1,6 +1,16 @@
 #include "worm.hpp"
 
 #include <alps/params/convenience_params.hpp>
+#include <algorithm>
+#include <numeric>
+
+namespace {
+#if defined(_WIN32)
+using parameter_size_type = unsigned long;
+#else
+using parameter_size_type = std::size_t;
+#endif
+}
 
 std::string worm::code_name() {
     return "Simulation of the Bose-Hubbard or the XXZ model with the worm algorithm";
@@ -19,18 +29,21 @@ void worm::define_parameters(parameters_type & parameters) {
     // followed by the worm specific parameters
     alps::define_convenience_parameters(parameters)
         .description(worm::code_name())
-        .define<size_t>("runtimelimit",         60,      "run time limit in seconds")
+        .define<parameter_size_type>("runtimelimit",         60,      "run time limit in seconds")
         .define<double>("beta",                 1.0,     "inverse temperature")
         .define<int>("sweeps",                  1000,    "maximum number of sweeps")
         .define<int>("thermalization",          200,     "number of sweeps for thermalization")
-        .define<size_t>("seed",                 91,      "seed for random number generation")
-        .define<double>("E_off",                1.0,     "energy offset (technical parameter in move update")
+        .define<parameter_size_type>("seed",                 91,      "seed for random number generation")
+        .define<double>("E_off",                1.0,     "energy offset (technical parameter in move update)")
         .define<double>("C_worm",               2.0,     "weight factor of worm configurations vs diagonal configurations (technical parameter in insertworm/glueworm updates")
-        .define<int>("canonical",               -1,       "-1 for grand-canonical measurement; a positive number indicates the canonical measurement at this value")
+        .define<int>("canonical",               -1,       "-1 for the ordinary grand-canonical executable; a non-negative exact N requires the canonical/CWINDOW executable")
+        .define<double>("canonical_window",      0.1,      "open-worm particle-number window; must satisfy 0 < canonical_window < 1 so closed configurations remain exactly canonical")
+        .define<int>("initial_occupancy",       1,       "uniform occupation used for a fresh configuration")
+        .define<int>("initial_particle_number", -1,      "fresh grand-canonical starting particle number; -1 uses initial_occupancy and never constrains later sampling")
         .define<unsigned long>("Ntest",         10000,    "test configuration after this number of updates "  )
         .define<unsigned long>("Nsave",         100000,   "save configuration after this number of updates"   )
-        .define<size_t>("Nmeasure",             1,        "measure O(1) observables after this number of updates"   )
-        .define<size_t>("Nmeasure2",            1,        "measure O(N) observables after this number of updates"   )
+        .define<parameter_size_type>("Nmeasure",             1,        "measure O(1) observables after this number of updates"   )
+        .define<parameter_size_type>("Nmeasure2",            1,        "measure O(N) observables after this number of updates"   )
         .define<double>("p_insertworm",         1.0,      "update probability to insert worm in diagonal configuration")
         .define<double>("p_moveworm",           0.3,      "update probability to move worm head around")
         .define<double>("p_insertkink",         0.2,      "update probability to insert kink at position of worm head")
@@ -44,8 +57,8 @@ void worm::define_parameters(parameters_type & parameters) {
   model::define_parameters(parameters);
 
 #if defined(UNISYS) && defined(MATSUBARA_MEAS)
-  parameters.define<size_t>("Nfreq", 0, "number of non-negative bosonic Matsubara frequencies n for G(k,omega_n); 0 disables measurement");
-  parameters.define<size_t>("Ntau_bins", 0, "number of imaginary-time bins over [0,beta) for the direct binned G(k=0,tau) diagnostic; 0 disables measurement");
+  parameters.define<parameter_size_type>("Nfreq", 0, "number of non-negative bosonic Matsubara frequencies n for G(k,omega_n); 0 disables measurement");
+  parameters.define<parameter_size_type>("Ntau_bins", 0, "number of imaginary-time bins over [0,beta) for the direct binned G(k=0,tau) diagnostic; 0 disables measurement");
 #endif
 
   std::string ModelClassifierName = parameters["model"].as<std::string>();
@@ -81,6 +94,9 @@ worm::worm(parameters_type const & parameters, std::size_t seed_offset) : alps::
     , E_off(parameters["E_off"])
     , C_worm(parameters["C_worm"])
     , canonical(parameters["canonical"])
+#ifdef CAN_WINDOW
+    , can_window(parameters.exists("canonical_window") ? parameters["canonical_window"].as<double>() : 0.1)
+#endif
     , Ntest(parameters["Ntest"])
     , Nsave(parameters["Nsave"])
     , Nmeasure(parameters["Nmeasure"])
@@ -91,12 +107,35 @@ worm::worm(parameters_type const & parameters, std::size_t seed_offset) : alps::
     , nbval(zcmax)
     , MyGenerator(std::size_t(parameters["seed"]) + seed_offset)
 {
+  if (!(beta > 0.0) || !std::isfinite(beta))
+    throw std::runtime_error("beta must be finite and greater than zero.");
+  if (!(E_off > 0.0) || !std::isfinite(E_off))
+    throw std::runtime_error("E_off must be finite and greater than zero.");
+  if (!(C_worm > 0.0) || !std::isfinite(C_worm))
+    throw std::runtime_error("C_worm must be finite and greater than zero.");
+  if (parameters["sweeps"].as<int>() < 10)
+    throw std::runtime_error("sweeps must be at least 10 so progress reporting has a nonzero interval.");
+  if (parameters["thermalization"].as<int>() < 0)
+    throw std::runtime_error("thermalization must be non-negative.");
+  if (Nmeasure == 0 || Nmeasure2 == 0)
+    throw std::runtime_error("Nmeasure and Nmeasure2 must be greater than zero.");
+
+#ifdef CAN_WINDOW
+  if (!(can_window > 0.0 && can_window < 1.0) || !std::isfinite(can_window))
+    throw std::runtime_error("canonical_window must be finite, greater than zero, and less than one.");
+#else
+  if (canonical != -1)
+    throw std::runtime_error("The ordinary grand-canonical executable requires canonical = -1; use a CWINDOW build for exact N.");
+#endif
 
   //set dtol
+  const double dtol_scale = parameters["dtol_scale"].as<double>();
+  if (!(dtol_scale > 0.0) || !std::isfinite(dtol_scale))
+    throw std::runtime_error("dtol_scale must be finite and greater than zero.");
   int beta_int = int(beta);
   int bin_digits = 0;
   for (; beta_int > 0; beta_int >>= 1) bin_digits++;
-  dtol = pow(2,-DBL_MANT_DIG+bin_digits) * double(parameters["dtol_scale"]);
+  dtol = pow(2,-DBL_MANT_DIG+bin_digits) * dtol_scale;
   //dtol = 1e-14;
   std::cout << "# dtol : " << dtol << "\n";
 
@@ -256,8 +295,8 @@ void worm::initialize_update_prob(update_tag begin, update_tag end) {
     if (parameters.defined("p_" + update_names[upd])) {
       
       update_prob[upd] = double(parameters["p_" + update_names[upd]]);
-      if (update_prob[upd] < 0) {
-        throw std::runtime_error("Negative update probability: "
+      if (update_prob[upd] < 0 || !std::isfinite(update_prob[upd])) {
+        throw std::runtime_error("Update probability must be finite and non-negative: "
                                          + update_names[upd]);
       }
     }
@@ -266,6 +305,8 @@ void worm::initialize_update_prob(update_tag begin, update_tag end) {
     }
     norm += update_prob[upd];
   }
+  if (!(norm > 0.) || !std::isfinite(norm))
+    throw std::runtime_error("Each update-probability group must have a finite, positive sum.");
   if (abs(norm - 1.) > 1e-10) {
     std::cerr << "Update probabilities do not add up to one.\n"
               << "Renormalizing..." << std::endl;
@@ -327,15 +368,45 @@ void worm::initialize() {
 
 
 #ifdef CAN_WINDOW
-  for (SiteType s = 0; s < Nsites; s++) {
-      state[s] = canonical / Nsites;
-      if (s < canonical % Nsites) ++state[s];
-  }
+  if (canonical < 0)
+    throw std::runtime_error("canonical must be non-negative in a CWINDOW build.");
+  const StateType base_occupancy = canonical / Nsites;
+  const SiteType remainder = canonical % Nsites;
+  if (MyModel->range_fail(base_occupancy) ||
+      (remainder > 0 && MyModel->range_fail(base_occupancy + 1)))
+    throw std::runtime_error("canonical particle number is incompatible with nmin/nmax and the lattice size.");
+  std::fill(state.begin(), state.end(), base_occupancy);
+  std::vector<SiteType> randomized_sites(Nsites);
+  std::iota(randomized_sites.begin(), randomized_sites.end(), SiteType(0));
+  std::shuffle(randomized_sites.begin(), randomized_sites.end(), MyGenerator);
+  for (SiteType i = 0; i < remainder; ++i)
+    ++state[randomized_sites[i]];
   number_of_particles = canonical;
 #else
-  for (SiteType s = 0; s < Nsites; s++)
-    state[s] = 1;
-  number_of_particles = Nsites;
+  const int initial_particle_number = parameters["initial_particle_number"].as<int>();
+  if (initial_particle_number < -1)
+    throw std::runtime_error("initial_particle_number must be -1 or non-negative.");
+  if (initial_particle_number >= 0) {
+    const StateType base_occupancy = initial_particle_number / Nsites;
+    const SiteType remainder = initial_particle_number % Nsites;
+    if (MyModel->range_fail(base_occupancy) ||
+        (remainder > 0 && MyModel->range_fail(base_occupancy + 1)))
+      throw std::runtime_error("initial_particle_number is incompatible with nmin/nmax and the lattice size.");
+    std::fill(state.begin(), state.end(), base_occupancy);
+    std::vector<SiteType> randomized_sites(Nsites);
+    std::iota(randomized_sites.begin(), randomized_sites.end(), SiteType(0));
+    std::shuffle(randomized_sites.begin(), randomized_sites.end(), MyGenerator);
+    for (SiteType i = 0; i < remainder; ++i)
+      ++state[randomized_sites[i]];
+    number_of_particles = initial_particle_number;
+  }
+  else {
+    const StateType initial_occupancy = parameters["initial_occupancy"].as<StateType>();
+    if (MyModel->range_fail(initial_occupancy))
+      throw std::runtime_error("initial_occupancy must be between nmin and nmax.");
+    std::fill(state.begin(), state.end(), initial_occupancy);
+    number_of_particles = static_cast<long long>(Nsites) * initial_occupancy;
+  }
 #endif
   
   // insert dummy elements on all sites, keeping the code simpler and making a line of where to measure diag properties
@@ -440,30 +511,31 @@ void worm::measure() {
 }
 
 void worm::force_reset_statistics() {
-  if (sweeps > thermalization_sweeps) {
-    for (size_t i=0; i < counter.size(); i++) counter[i] = 0;
-    reset(measurements["Total_Energy"]);
-    reset(measurements["Kinetic_Energy"]);
-    reset(measurements["Potential_Energy"]);
-    reset(measurements["Number_of_particles"]);
-    reset(measurements["Number_of_particles_squared"]);
-    reset(measurements["Density_Distribution"]);
+  if (sweeps <= thermalization_sweeps)
+    throw std::runtime_error("Cannot reset statistics before thermalization has completed; use Resume first.");
+
+  for (size_t i=0; i < counter.size(); i++) counter[i] = 0;
+  reset(measurements["Total_Energy"]);
+  reset(measurements["Kinetic_Energy"]);
+  reset(measurements["Potential_Energy"]);
+  reset(measurements["Number_of_particles"]);
+  reset(measurements["Number_of_particles_squared"]);
+  reset(measurements["Density_Distribution"]);
 #ifdef UNISYS
-    reset(measurements["Density_Matrix"]);
-    //reset(measurements["Density_Matrix2"]);
-    reset(measurements["DensDens_CorrFun"]);
-    reset(measurements["Winding_number_squared"]);
+  reset(measurements["Density_Matrix"]);
+  //reset(measurements["Density_Matrix2"]);
+  reset(measurements["DensDens_CorrFun"]);
+  reset(measurements["Winding_number_squared"]);
 #ifdef MATSUBARA_MEAS
-    reset(measurements["Greenfun_k_omega_re"]);
-    reset(measurements["Greenfun_k_omega_im"]);
-    reset(measurements["Greenfun_k0_tau_binned"]);
-    std::fill(hist_grtau_re.begin(), hist_grtau_re.end(), 0.);
-    std::fill(hist_grtau_im.begin(), hist_grtau_im.end(), 0.);
-    std::fill(hist_g0tau.begin(), hist_g0tau.end(), 0.);
+  reset(measurements["Greenfun_k_omega_re"]);
+  reset(measurements["Greenfun_k_omega_im"]);
+  reset(measurements["Greenfun_k0_tau_binned"]);
+  std::fill(hist_grtau_re.begin(), hist_grtau_re.end(), 0.);
+  std::fill(hist_grtau_im.begin(), hist_grtau_im.end(), 0.);
+  std::fill(hist_g0tau.begin(), hist_g0tau.end(), 0.);
 #endif
-    for (size_t i=0; i < hist_densmat.size(); i++) hist_densmat[i] = 0;
+  for (size_t i=0; i < hist_densmat.size(); i++) hist_densmat[i] = 0;
 #endif
-  }
   for (size_t i=0; i < statistics_tag::statistics_count; i++) {
     for (size_t j=0; j < update_tag::update_count; j++) update_statistics[i][j] = 0;
   }
@@ -845,6 +917,35 @@ void worm::test_conf() {
       cerr << "\n# TEST_CONF : worm_passes_nb_kink is set but none is found; worm head time and site : " << worm_head_it->time() << "\t" << worm_head_it->link() << endl;
       throw exception();
     }
+  }
+  long long reconstructed_number = 0;
+  for (SiteIndex i = 0; i < Nsites; ++i) {
+    const StateType boundary_occupation = dummy_it[i]->before();
+    if (dummy_it[i]->after() != boundary_occupation || state[i] != boundary_occupation) {
+      cerr << "\n# TEST_CONF : boundary occupation/state mismatch on site " << i
+           << " dummy before/after " << dummy_it[i]->before() << "/"
+           << dummy_it[i]->after() << " state " << state[i] << endl;
+      throw exception();
+    }
+    reconstructed_number += boundary_occupation;
+  }
+  if (reconstructed_number != number_of_particles) {
+    cerr << "\n# TEST_CONF : tracked particle number " << number_of_particles
+         << " differs from boundary reconstruction " << reconstructed_number << endl;
+    throw exception();
+  }
+#ifdef CAN_WINDOW
+  if (worm_diag && reconstructed_number != canonical) {
+    cerr << "\n# TEST_CONF : closed canonical configuration has N="
+         << reconstructed_number << " instead of " << canonical << endl;
+    throw exception();
+  }
+#endif
+  const double reconstructed_measure_energy = calc_potential_energy_measure();
+  if (is_not_close(reconstructed_measure_energy, Epot_measure, 1e-8)) {
+    cerr << "# Measured potential energies do not match "
+         << reconstructed_measure_energy << "\t" << Epot_measure << "\n";
+    throw exception();
   }
   double Ep = calc_potential_energy_loc() + calc_potential_energy_nb();
   if (is_not_close(Ep, Epot_tot, 1e-8)) {

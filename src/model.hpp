@@ -6,6 +6,7 @@
 #include <string>
 #include <algorithm>
 #include <iterator>
+#include <stdexcept>
 
 class model {
 public:
@@ -73,13 +74,15 @@ public:
   {
     nmin = 0;
     nmax = params["nmax"].as<StateType>();
+    if (nmax < nmin)
+      throw std::runtime_error("nmax must be non-negative for the Bose-Hubbard model.");
   }
 
   static void define_custom_model_parameters(alps::params & params) {
     params
 #ifdef UNISYS
       .define<double>("t_hop",                1.0,    "hopping amplitude in the Bose-Hubbard model t b^{\\dagger}_i b_j")
-      .define<double>("U_on",                 4.0,    "on-site density-density repulsion in Bose-Hubbard model U n_i(n_i-1)")
+      .define<double>("U_on",                 4.0,    "on-site Bose-Hubbard repulsion U n_i(n_i-1)/2")
       .define<double>("V_nn",                 0.0,    "nearest neighbor density density repulsion in Bose-Hubbard model V n_i n_j")
       .define<double>("mu",                   0.7,    "chemical potential - mu n_i")
 #endif

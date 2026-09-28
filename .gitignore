@@ -20,3 +20,13 @@ paper/worm.pdf
 paper/worm.out
 paper/worm.bbl
 paper/worm.blg
+
+# Keep reproducible Windows build/run helpers under version control.
+!scripts/
+!scripts/*.ps1
+!scripts/*.py
+__pycache__/
+!patches/
+!patches/*.patch
+/dist/
+/results/

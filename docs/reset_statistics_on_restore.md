@@ -75,6 +75,14 @@ The `reset_statistics` member variable remains, but is now purely
 informational (set by `force_reset_statistics()` itself, printed by
 `print_params()`) rather than being read from `alps::params`.
 
+The reset routine now also refuses to run when the restored rank has not
+passed its configured thermalisation sweep threshold. This prevents a
+premature production reset from advancing the counter and silently bypassing
+unfinished nominal thermalisation. Continue the checkpoint without a reset
+first, then request a production reset. Passing the threshold is only a
+mechanical prerequisite; block stability and independent starts are still
+required to establish equilibration.
+
 ## Validation
 
 Confirmed by comparing measurement counts across three runs sharing one
@@ -90,4 +98,4 @@ checkpoint:
   `force_reset_statistics()` rewinding both the ALPS accumulators and
   the internal `sweeps` counter back to `thermalization_sweeps`.
 
-Verified for both `qmc_worm` (single-core) and `qmc_worm_mpi`.
+Verified for both `qmc_worm` (single-core) and `qmc_worm_mpi`. The premature-reset path is separately expected to fail with a clear instruction to use Resume first.

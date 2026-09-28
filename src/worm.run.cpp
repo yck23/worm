@@ -85,15 +85,23 @@ int main(int argc, char** argv) {
 
         // Collect and save results
         alps::results_type<worm>::type results = alps::collect_results(sim);
+        const bool has_measurements =
+            results.size() && results["Total_Energy"].count() > 0;
 
-        std::cout << "# Result:" << std::endl;
-        std::cout << results << std::endl;
+        if (has_measurements) {
+            std::cout << "# Result:" << std::endl;
+            std::cout << results << std::endl;
+        }
+        else {
+            std::cout << "# No production measurements were collected; "
+                      << "the run stopped during thermalization." << std::endl;
+        }
 
         std::cout << "# Saving results to " << output_file << std::endl;
         try {
             alps::hdf5::archive ar(output_file, "w");
             ar["/parameters"] << parameters;
-            ar["/simulation/results"] << results;
+            if (has_measurements) ar["/simulation/results"] << results;
         }
         catch (const std::exception& e) {
             std::cerr << "# ERROR saving results: " << e.what() << std::endl;

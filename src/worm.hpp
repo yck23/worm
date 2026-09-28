@@ -217,6 +217,9 @@ private :
   double E_off;           // energy offset, internal parameter of the code
   double C_worm, C_NBW;
   int canonical;          // canonical number of particles
+#ifdef CAN_WINDOW
+  double can_window;      // allowed number deviation while a worm is open; closed configurations stay exactly canonical
+#endif
   
   unsigned long Ntest;
   unsigned long Nsave;
@@ -308,10 +311,6 @@ private:
 #endif
 #endif
   std::vector<size_t> counter;
-#ifdef CAN_WINDOW
-  static constexpr double can_window = 0.1;  // fraction of the imaginary time above and below the worm tail in which the worm head can move
-#endif
-  
   mt19937 MyGenerator;
   uniform_real_distribution<double> rnd;
   
