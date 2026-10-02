@@ -1,6 +1,6 @@
 # Start here: running the 64 x 64 Rb-87 Bose-Hubbard calculation
 
-This is the beginner guide. It starts with what the simulation controls, then explains the worm update, the files, and the commands.
+This is the beginner guide for fixed particle number. It starts with what the simulation controls, then explains the worm update, the files, and the commands. If you want to choose chemical potential and let the simulation find the density, use the step-by-step [grand-canonical instructions](GRAND_CANONICAL_RUN_GUIDE.md#8-run-one-editable-parameter-file) instead.
 
 If this file is open as plain text, Markdown symbols will be visible. In VS Code, press Ctrl+Shift+V to open the formatted preview. Only text inside a PowerShell command block is meant to be typed.
 
@@ -96,6 +96,8 @@ energy without the -mu*N term = reported energy + mu*N
 
 2. The code also uses mu while proposing temporary open-worm moves. It can therefore affect acceptance and mixing efficiency even though it does not set the canonical density. Keep the audited value unless you deliberately retune and revalidate the sampler.
 
+The energy obtained by adding mu N is the Bose-Hubbard lattice internal energy. For the continuum finite-difference energy convention, add a further 4*t*N to restore the square-grid kinetic-energy zero. This distinction matters when comparing simulation energies with a continuum model or the thesis; it does not alter the run.
+
 If the scientific question instead requires chemical potential to determine the mean particle number, use a grand-canonical executable and measure **Number_of_particles**. That is not the workflow in this guide. Early short 64 x 64 tests started far apart and remained trapped in different number sectors. Later 16 x 16 and 32 x 32 audits showed that the same machinery can converge when the starts, burn-in, and retained blocks are controlled. The exact-N workflow remains the independently replicated 64 x 64 reference.
 
 The executable, parameter template, commands, and required start-independence test are provided in [GRAND_CANONICAL_RUN_GUIDE.md](GRAND_CANONICAL_RUN_GUIDE.md).
@@ -154,13 +156,13 @@ The dedicated runner is:
 scripts\run_rb87_bkt64.ps1
 ```
 
-The runner always selects the exact-N MPI executable. It does not override beta, U, N, lattice size, cutoff, or worm settings.
+The commands in this guide use the runner's default exact-N MPI executable. The same runner can select its other executable with -Ensemble GrandCanonical, as explained in the grand-canonical guide. It does not override beta, U, N, lattice size, cutoff, or worm settings.
 
 ### A crucial checkpoint rule
 
 **Fresh** reads the complete INI file and saves its parameters into the checkpoints.
 
-**Resume** and **Production** restore the existing checkpoint. Editing the INI after Fresh does not change the physical parameters inside that chain. The runner reads the INI during continuation only to locate the named output and checkpoint files.
+**Resume** and **Production** restore the existing checkpoint, including its run-length and measurement settings. Editing the INI after Fresh does not change those settings or the physical parameters inside that chain. The runner reads the INI during continuation to locate the named output/checkpoint files and validate the requested ensemble. It does not use it to retune a saved simulation.
 
 Therefore:
 

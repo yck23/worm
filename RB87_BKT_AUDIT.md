@@ -21,7 +21,7 @@ Use [parameter_files/Rb87_BKT_64.ini](parameter_files/Rb87_BKT_64.ini) and [scri
 
 ## Physical sources and mapping
 
-The Oxford source is Abel Beregi's 2024 DPhil thesis, [Probing universality of 2D quantum systems with bilayer Bose gases](https://ora.ox.ac.uk/objects/uuid:b2f4f0a1-8576-4528-bbd3-557d273cfbdd). Appendix D.8 uses Rb-87, dimensionless interaction strength 0.076 for 1 kHz axial confinement, 40 nK, and a 0.5 micrometre numerical lattice spacing. The thesis also describes an approximately 32 micrometre uniform region and quotes a uniform-system critical phase-space density near 8.5.
+The Oxford source is Abel Beregi's 2024 DPhil thesis, [Probing universality of 2D quantum systems with bilayer Bose gases](https://ora.ox.ac.uk/objects/uuid:b2f4f0a1-8576-4528-bbd3-557d273cfbdd). Appendix D.9 gives Rb-87, dimensionless interaction strength 0.076 for 1 kHz axial confinement, 40 nK, and a 0.5 micrometre numerical lattice spacing; D.8 describes its classical-field Metropolis method. The thesis also describes an approximately 32 micrometre uniform region and quotes a uniform-system critical phase-space density near 8.5. The present periodic square is a related model, not a reproduction of the thesis trap or bilayer.
 
 The atomic mass is 1.44316089500 x 10^-25 kg from Daniel Steck's [Rubidium 87 D Line Data](https://steck.us/alkalidata/rubidium87numbers.pdf), revision 2.3.4.
 

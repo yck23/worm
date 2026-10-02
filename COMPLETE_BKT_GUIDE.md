@@ -2,11 +2,11 @@
 
 This document is a self-contained guide to the physics, Monte Carlo algorithm, code, Windows build, Rb-87 mapping, and numerical workflow in this repository.
 
-Guide status: 28 September 2026, repository HEAD fb73840 plus the audited working-tree changes described here. To read the formatted version in VS Code, press Ctrl+Shift+V. Backticks and dollar signs visible in a plain-text editor are Markdown/LaTeX formatting marks, not characters to type unless they occur inside a command block.
+Guide status: independent audit completed on 2 October 2026 for commit bd0a6d9, compared with the preceding PR merge fb73840. The implementation changes described below are committed; this guide update does not change the simulation code. The audit supports the number, energy and winding workflow, with the convergence and on-site correlation-estimator limitations stated below. To read the formatted version in VS Code, press Ctrl+Shift+V. Backticks and dollar signs visible in a plain-text editor are Markdown/LaTeX formatting marks, not characters to type unless they occur inside a command block.
 
 The immediate target is a homogeneous, periodic, two-dimensional Bose gas represented by a 64 x 64 Bose-Hubbard lattice. The supplied parameter set approximates the Rb-87 regime. It is a controlled lattice calculation of BKT-like physics.
 
-The shortest operational instructions remain in [BASIC_RUN_GUIDE.md](BASIC_RUN_GUIDE.md). The numerical evidence is tabulated in [RB87_BKT_AUDIT.md](RB87_BKT_AUDIT.md), and the reproducible compiler/dependency details are in [WINDOWS_BUILD.md](WINDOWS_BUILD.md).
+For chemical-potential control, start with the copy-and-edit parameter-file procedure in [GRAND_CANONICAL_RUN_GUIDE.md, Section 8](GRAND_CANONICAL_RUN_GUIDE.md#8-run-one-editable-parameter-file). For a fixed exact particle number, use [BASIC_RUN_GUIDE.md](BASIC_RUN_GUIDE.md). The numerical evidence is tabulated in [RB87_BKT_AUDIT.md](RB87_BKT_AUDIT.md), and the reproducible compiler/dependency details are in [WINDOWS_BUILD.md](WINDOWS_BUILD.md).
 
 ## 0. Orientation: what is fixed and what is measured
 
@@ -220,14 +220,14 @@ The latter setting makes the 64 x 64 test affordable, but it leaves only about o
 
 ### 3.1 Provenance and scope
 
-The upstream project is [LodePollet/worm](https://github.com/LodePollet/worm), accompanying Nicolas Sadoune and Lode Pollet, [Efficient and scalable Path Integral Monte Carlo Simulations with worm-type updates for Bose-Hubbard and XXZ models](https://arxiv.org/abs/2204.12262). The current checkout is commit `fb73840`. Its `upstream/main` and the configured fork's `origin/main` point to that same commit.
+The upstream project is [LodePollet/worm](https://github.com/LodePollet/worm), accompanying Nicolas Sadoune and Lode Pollet, [Efficient and scalable Path Integral Monte Carlo Simulations with worm-type updates for Bose-Hubbard and XXZ models](https://arxiv.org/abs/2204.12262). The audited checkout is commit `bd0a6d9`; the preceding PR merge used for comparison is `fb73840`. These are local commit identities, not a claim about the current state of remote branches.
 
 There is no historical release tag that cleanly labels “the exact paper snapshot.” For a reproducible description, this guide uses two source-history layers:
 
 1. The original/published implementation and its maintenance lineage through commit `4966283`.
-2. The later committed measurement and diagnostic work from `2a4c97e` through the current merge `fb73840`.
+2. The later committed measurement and diagnostic work from `2a4c97e` through PR merge `fb73840`.
 
-The Windows, canonical-mixing, runner, and documentation changes in the present worktree are a third layer discussed in Section 5. This distinction matters: it avoids attributing all current functionality either to the paper authors or to the local adaptation.
+The Windows, canonical-mixing, runner, and documentation changes committed in `bd0a6d9` are a third layer discussed in Section 5. This distinction matters: it avoids attributing all current functionality either to the paper authors or to the local adaptation.
 
 The project supports Bose-Hubbard and XXZ models on selectable lattices, with serial and MPI front ends. Its main design goal is an efficient continuous-time worm sampler with local data structures, consistency tests, ALPSCore accumulators, HDF5 results, and resumable checkpoints.
 
@@ -306,9 +306,9 @@ A checkpoint stores much more than an output mean. It includes the random-number
 
 The physical parameters in a restored checkpoint should be treated as immutable. Editing the INI file after a fresh run does not redefine a chain already stored in checkpoint HDF5. For a different $L$, $T$, $U$, $N$, cutoff, window, or seed, start a new output directory and fresh checkpoints.
 
-## 4. Later committed enhancements already present at HEAD
+## 4. Enhancements already present in the preceding PR merge
 
-The current upstream/fork HEAD contains post-baseline work that should not be confused with the uncommitted Windows/Rb-87 adaptation.
+The preceding PR merge contains post-baseline work that should not be confused with the subsequent Windows/Rb-87 adaptation.
 
 ### 4.1 Matsubara and imaginary-time Green functions
 
@@ -334,7 +334,7 @@ The same commit range includes tighter floating-point diagnostics (`dtol`/`dtol_
 
 ## 5. Changes made for this Windows/Rb-87 workflow
 
-These are the current worktree adaptations created for this calculation. They are not part of the published algorithm, and at the time of this guide they are uncommitted local changes. They preserve unrelated user work and can be inspected with `git diff` and `git status --short`.
+These adaptations were committed in `bd0a6d9` and can be inspected with `git diff fb73840 bd0a6d9`. The worm-move implementation in `src/worm.update.cpp` is unchanged. Default fresh grand-canonical runs agreed exactly in three seeded comparisons against the preceding PR, using the same ALPSCore installation and the necessary Windows parameter-type compatibility fixes. Initialization choices, restart safeguards, and canonical-window tuning can still change finite-run behaviour; this is not a claim that every configuration or restart is bitwise equivalent.
 
 ### 5.1 Reproducible, verified ALPSCore build
 
@@ -399,7 +399,7 @@ Its modes are:
 
 - `Resume`: continue the same chain and existing accumulators.
 
-- `Production`: continue the same chain but pass `--reset-statistics`, producing a statistically separate measurement block.
+- `Production`: continue the same chain but pass `--reset-statistics`, producing a separately accumulated measurement block. The worldlines and random-number state continue; adjacent blocks are not automatically statistically independent.
 
 The dedicated runner deliberately does not override the physical or Monte Carlo values in the INI file. Its command-line controls are the ensemble, mode, process count, parameter-file path, and output-directory path. This realizes the requested “always edit the parameter file” workflow.
 
@@ -423,7 +423,7 @@ Scientific validation then compared grand-canonical starts, canonical windows, o
 
 The physical inputs come from two primary sources:
 
-- Abel Beregi, [Probing universality of 2D quantum systems with bilayer Bose gases](https://ora.ox.ac.uk/objects/uuid:b2f4f0a1-8576-4528-bbd3-557d273cfbdd), Oxford DPhil thesis (2024). Appendix D.8 uses Rb-87, dimensionless coupling $\widetilde g=0.076$ for 1 kHz axial confinement, $T=40$ nK, and a 0.5 micrometre numerical grid. The thesis also discusses an approximately 32 micrometre uniform region.
+- Abel Beregi, [Probing universality of 2D quantum systems with bilayer Bose gases](https://ora.ox.ac.uk/objects/uuid:b2f4f0a1-8576-4528-bbd3-557d273cfbdd), Oxford DPhil thesis (2024). Appendix D.9 gives Rb-87, dimensionless coupling $\widetilde g=0.076$ for 1 kHz axial confinement, $T=40$ nK, and a 0.5 micrometre numerical grid. Appendix D.8 describes the classical-field Metropolis method, not this quantum worm algorithm. The thesis also discusses an approximately 32 micrometre uniform region; the present periodic square is not its trapped or bilayer geometry.
 
 - Daniel Steck, [Rubidium 87 D Line Data](https://steck.us/alkalidata/rubidium87numbers.pdf), for $m=1.44316089500\times10^{-25}$ kg.
 
@@ -475,6 +475,10 @@ state or to retune mu when following a fixed-density path.
 
 The thermal wavelength at 40 nK is only about 1.87 grid spacings. Thus $a=0.5$ micrometres is a fairly coarse ultraviolet cutoff. The calculation can show the intended finite-temperature topology, but quantitative continuum-experiment comparison requires smaller $a$ at fixed physical size/density and an extrapolation toward $a\to0$.
 
+For energy comparisons, the stored Total_Energy includes the chemical-potential term. Add $\mu_{\rm BH}\langle N\rangle$ to obtain the Bose-Hubbard hopping-plus-interaction energy. To obtain the continuum finite-difference internal energy, add $(\mu_{\rm BH}+4t)\langle N\rangle$ instead. The extra $4t$ per particle restores the continuum kinetic-energy zero; it does not change sampling.
+
+The 1 kHz axial level spacing corresponds to about 48 nK, so 40 nK is not far below it. The strictly two-dimensional model does not include excited axial modes. Their importance, as well as trap geometry, must be checked before claiming quantitative agreement with the experiment.
+
 ### 6.3 Density and exact particle number
 
 For a weak homogeneous 2D gas, use the critical phase-space-density estimate
@@ -508,7 +512,7 @@ For each finite size, the workflow rounds $n_{\rm site}L^2$ to the nearest integ
 | 64 | 9948 |
 | 80 | 15543 |
 
-This choice keeps the density approximately fixed across sizes. It is an informed critical-region target, not a self-consistent determination of the experimental equation of state. A later precision study should test nearby densities as well as grid spacing.
+This choice keeps the density approximately fixed across sizes. It is an informed critical-region target, not a self-consistent determination of the experimental equation of state or a measured thesis particle number. Choosing density using an approximate critical formula at 40 nK does not independently establish that the simulation's transition occurs at 40 nK. A later precision study should test nearby densities as well as grid spacing. In the grand-canonical workflow these numbers are only starting guesses; mu, not that guess, controls equilibrium density.
 
 ### 6.4 Temperature conversion
 
@@ -941,7 +945,7 @@ $$
 
 Do not average away the block or seed labels at import time. First plot every block in chronological order. Energy usually equilibrates before winding, so a stable energy trace alone is insufficient. Reject only a clearly identified drifting prefix; do not selectively remove isolated high or low values after seeing the desired transition.
 
-Treat reset blocks and independent seed groups as the primary independent units. Millions of per-worm samples have autocorrelation and share one evolving worldline history. A hierarchical bootstrap over seed groups and accepted blocks is more honest than pretending every recorded sweep is independent.
+Treat independently seeded, equilibrated chain families as the primary independent units. Reset blocks remain consecutive pieces of the same history and need not be independent. Millions of per-worm samples also have autocorrelation. Resample whole independent families, or use a time-block method with blocks long enough to account for the measured autocorrelation; do not shuffle short reset blocks as if resetting made them independent. Three families give only a coarse estimate of between-family uncertainty.
 
 ### 11.2 Visual diagnostics before fitting
 

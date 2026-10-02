@@ -14,15 +14,17 @@ Audited Windows and Rb-87 workflow
 The upstream instructions below are retained for the original project. For this
 fork's verified Windows/MinGW build and the Rb-87 calculations, start with:
 
+  * [GRAND_CANONICAL_RUN_GUIDE.md](GRAND_CANONICAL_RUN_GUIDE.md#8-run-one-editable-parameter-file) for step-by-step parameter-file editing and execution when mu is fixed and N is measured;
   * [BASIC_RUN_GUIDE.md](BASIC_RUN_GUIDE.md) for the simplest exact-N run;
-  * [GRAND_CANONICAL_RUN_GUIDE.md](GRAND_CANONICAL_RUN_GUIDE.md) when mu is fixed and N is measured;
   * [COMPLETE_BKT_GUIDE.md](COMPLETE_BKT_GUIDE.md) for the physics, path integral, implementation, and BKT analysis;
   * [RB87_BKT_AUDIT.md](RB87_BKT_AUDIT.md) for numerical evidence and limitations; and
   * [WINDOWS_BUILD.md](WINDOWS_BUILD.md) for the pinned ALPSCore dependency and reproducible build.
 
 The packaged Windows executables, their locally installed ALPSCore, and the
 grand-canonical finite-size workflow were independently re-audited on
-28 September 2026. Editing a parameter file does not require a rebuild.
+2 October 2026. Editing a parameter file does not require a rebuild. The audit
+supports the number, energy and winding workflow; it does not certify a
+precision BKT temperature or the known defective on-site Density_Matrix estimator.
 
 Structure
 ---------

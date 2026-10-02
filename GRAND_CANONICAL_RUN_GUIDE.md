@@ -2,7 +2,9 @@
 
 This is the guide to use when **chemical potential is fixed and particle number is measured**.
 
-Audit status: 28 September 2026. The grand-canonical implementation, checkpoint restore, independent-start protocol, and number response have passed. A fixed-mu temperature audit now covers L = 16, 24, and 32 with three independent starts per point and repeated reset production blocks. It resolves normal, crossover, and superfluid winding regimes, while also showing residual slow number-sector motion near the crossover; it is a validated diagnostic workflow, not a precision transition-temperature result. The separately audited 64 x 64 reference calculation remains canonical, because a successful smaller lattice does not prove that an L = 64 grand-canonical chain has equilibrated.
+Independent audit completed: 2 October 2026, for commit bd0a6d9 against the preceding PR merge fb73840. Source comparison, fresh-run comparisons, small-system finite-temperature checks, checkpoint checks, the verified ALPSCore package, and an independent recalculation of the archived results are complete. The supported usage is grand-canonical number, energy, and winding measurements with explicit convergence checks. The L = 16, 24, and 32 scan shows BKT-like regimes, but residual drift near the crossover prevents a precision transition-temperature claim. The inherited on-site Density_Matrix estimator issue remains; do not use it to measure density or normalize correlations.
+
+For the commands in order, go straight to [Section 8: run one editable parameter file](#8-run-one-editable-parameter-file). It starts with a 32 x 32 example. For an automated temperature scan with independent starting states, continue to Section 9. The separately audited 64 x 64 reference is canonical; its success does not establish convergence of a 64 x 64 grand-canonical run.
 
 If Markdown punctuation is visible, open the formatted preview in VS Code with Ctrl+Shift+V. The command blocks in this guide use tildes instead of backtick fences so the raw file is less distracting.
 
@@ -150,7 +152,7 @@ Their meanings are:
 - **U_on** is the on-site repulsion in units of t.
 - **mu** is the reservoir chemical potential in units of t. It controls the equilibrium number distribution.
 - **beta** is inverse temperature in units of 1/t.
-- **nmax** is the largest allowed occupation on one site.
+- **nmax** is the largest allowed occupation on one site. This truncates the model's state space, so it is not just a speed setting; check selected results at a larger value.
 - **canonical = -1** selects the grand-canonical behavior of the ordinary executable.
 - **initial_particle_number** constructs only the fresh starting configuration. It never constrains later N.
 - **canonical_window** may remain in the shared template, but the ordinary grand-canonical executable ignores it. It neither limits nor fixes N.
@@ -162,6 +164,10 @@ relation gives mu_cont/t about 0.447. The square-grid shift
 mu_BH = mu_cont - 4t then gives mu_BH/t about -3.553. This analytic estimate
 motivates the scan; the measured lattice equation of state, cutoff tests, and
 finite-size scaling still determine the numerical result.
+
+For this mapping, a 0.5 micrometre grid and the Rb-87 mass give t/kB = 11.1630863 nK, so beta = 11.1630863 / temperature_in_nK. The values U/t = 0.152 and beta about 0.279077 therefore represent the chosen weak-coupling, 40 nK starting point. The starting number 9948 on a 64 x 64 grid comes from an approximate critical-density formula, not a measured particle number in the thesis. It is only an initial guess in this ensemble.
+
+This is a homogeneous periodic-grid model inspired by the thesis, not a reproduction of its trap or bilayer. The quoted parameters occur in Appendix D.9; D.8 describes its classical-field Metropolis method, which differs from this quantum worm algorithm. At 40 nK the thermal wavelength is only about 1.87 grid spacings, and the 1 kHz axial level spacing corresponds to about 48 nK. Quantitative comparison with the experiment therefore needs grid-spacing and axial-excitation checks as well as Monte Carlo convergence.
 
 The main numerical controls are:
 
@@ -178,7 +184,7 @@ p_deletekink = 0.2
 p_glueworm = 0.1
 ~~~
 
-The value thermalization = 1000 is a technical accumulator threshold, **not a claim that 1000 worm excursions equilibrate the physics**. The workflow discards complete Fresh and Resume invocations as explicit burn-in. This also ensures that all MPI ranks acquire the sparse spatial observables before ALPS attempts to merge them.
+The value thermalization = 1000 is a technical accumulator threshold, **not a claim that 1000 worm excursions equilibrate the physics**. The workflow discards complete Fresh and Resume invocations as explicit burn-in. The modest threshold and Nmeasure2 reduce the risk that only some MPI ranks acquire sparse spatial observables before ALPS tries to merge them; every rank still needs enough completed sweeps.
 The current executable refuses a Production reset if a rank has not genuinely passed this threshold; use Resume first. Passing the threshold is still only a mechanical prerequisite, not evidence of physical equilibration.
 
 The wall-time limit is soft. The stop condition is checked after a complete worm update, so a long near-critical worm can carry the process beyond the nominal number of seconds.
@@ -206,50 +212,132 @@ Fresh reads an INI and creates checkpoints. Resume and Production restore the pa
 - any changed mu, beta, size, seed, or model parameter needs a new output directory and a new Fresh run;
 - keep the MPI process count unchanged when restoring rank-specific checkpoints.
 
+Even run-length and measurement settings are restored from the checkpoint. Editing runtimelimit, sweeps, thermalization, or C_worm in the original INI does not retune a resumed chain. To collect more data with its existing settings, repeat Resume or Production as appropriate. To use changed settings through this runner, start Fresh in another directory.
+
+The latest commit leaves the worm move code and the primary energy, number, and winding formulae unchanged from the preceding PR. Default fresh grand-canonical runs matched in three seeded comparisons. New initial-number controls change the starting state, and checkpoint/validation changes affect restart behaviour. The canonical-window setting can substantially change mixing in canonical runs; it has no effect in this grand-canonical executable. Do not expect identical finite-run results after changing starting states or sampling settings.
+
 ## 8. Run one editable parameter file
+
+### 8.1 Open the project; build only if needed
 
 Open PowerShell and enter:
 
 ~~~powershell
 Set-Location '\\alfs1.physics.ox.ac.uk\al\kuo\projects\worm'
-notepad .\parameter_files\Rb87_BKT_64_grand_canonical.ini
 ~~~
 
-Save the file, then choose a new output directory:
+The verified executable package already exists on this desktop. You do not need to activate a Python or ALPSCore environment to run it: the runner sets the DLL search path. If the package is missing, or you have changed the C++ source or dependency, build it once:
 
 ~~~powershell
-$parameterFile = '.\parameter_files\Rb87_BKT_64_grand_canonical.ini'
-$outputDirectory = '.\results\my_grand_canonical_run'
+.\scripts\build_windows.ps1 -Jobs 32
 ~~~
 
-Start a new chain:
+ALPSCore's source is in build-repro/alps-src and its installed libraries are in build-repro/alps-install. The runnable package is in dist/windows-square. These are different parts of the same build, not separate environments you must activate. See [WINDOWS_BUILD.md](WINDOWS_BUILD.md) for compiler and MPI prerequisites on another computer.
+
+### 8.2 Make your own parameter file
+
+Run this once for a new experiment. If this filename already exists, choose another name so you preserve it:
 
 ~~~powershell
-.\scripts\run_rb87_bkt64.ps1 -Ensemble GrandCanonical -Mode Fresh -Processes 24 -ParameterFile $parameterFile -OutputDirectory $outputDirectory
+$parameterFile = '.\parameter_files\my_gc_L32_T40.ini'
+if (Test-Path -LiteralPath $parameterFile) { throw 'Choose a new parameter filename.' }
+Copy-Item .\parameter_files\Rb87_BKT_64_grand_canonical.ini $parameterFile
+notepad $parameterFile
 ~~~
 
-Continue without resetting measurements:
+In Notepad, replace the existing values of these lines, then save and close. Do not append duplicate keys; leave the other template lines unchanged:
+
+~~~text
+Lx = 32
+Ly = 32
+mu = -3.53
+beta = 0.279077157505874
+canonical = -1
+initial_particle_number = 2487
+seed = 140001
+outputfile = "my_gc.out.h5"
+checkpoint = "my_gc.clone.h5"
+~~~
+
+This keeps t = 1, U = 0.152, nmax = 16 and periodic x/y boundaries from the template. You control chemical potential and temperature. The number 2487 is a starting guess, not a target that the simulation holds fixed. The measured mean N need not equal it.
+
+### 8.3 Choose where results go and start
+
+Run the following in the same PowerShell window. These variables are only filename and process-count shortcuts; they do not override physics in the INI:
 
 ~~~powershell
-.\scripts\run_rb87_bkt64.ps1 -Ensemble GrandCanonical -Mode Resume -Processes 24 -ParameterFile $parameterFile -OutputDirectory $outputDirectory
+$parameterFile = '.\parameter_files\my_gc_L32_T40.ini'
+$outputDirectory = '.\results\my_gc_L32_T40'
+$processes = 2
+$resultFile = Join-Path $outputDirectory 'my_gc.out.h5'
+.\scripts\run_rb87_bkt64.ps1 -Ensemble GrandCanonical -Mode Fresh -Processes $processes -ParameterFile $parameterFile -OutputDirectory $outputDirectory
 ~~~
 
-Use Resume for discarded burn-in. Inspect the evolving state:
+Keep -Ensemble GrandCanonical on every call: the runner otherwise defaults to canonical mode. Its historical filename contains bkt64, but Lx and Ly in your INI determine the actual size.
+
+Two MPI processes run two separately sampled copies and combine their measurements; they do not split the lattice into two pieces. You can choose up to 24 processes before Fresh to use this desktop's 24 physical cores for one family. Keep that count unchanged for all its restarts. More cores improve sampling throughput but do not make an unequilibrated chain equilibrated.
+
+Each call has the template's 900-second wall-time limit, checked after complete updates, so allow some overrun. The sweep limit can also end a call. Wait for completion before issuing the next command in that same result directory. A source sweep is a worm update, not a second of simulated atomic motion.
+
+### 8.4 Continue the initial, discarded part of the run
+
+Run Resume, inspect the result, and repeat as needed:
 
 ~~~powershell
-python .\scripts\summarize_bkt_result.py (Join-Path $outputDirectory 'Rb87_BKT_64_grand_canonical.out.h5')
+.\scripts\run_rb87_bkt64.ps1 -Ensemble GrandCanonical -Mode Resume -Processes $processes -ParameterFile $parameterFile -OutputDirectory $outputDirectory
+py -3.13 .\scripts\summarize_bkt_result.py $resultFile
 ~~~
 
-Once independent starts and late blocks are stable, reset the accumulators and retain a production block:
+Use py -3.13 on this desktop; the plain python command currently finds an unsuitable MSYS2 environment. The analysis needs h5py and numpy, already available in the audited Python installation.
+
+These Fresh/Resume measurements are burn-in: they help you judge how the state is changing but are not retained as equilibrium data. Resume reports accumulated means, which can conceal recent drift. Compare separate later blocks and independently started families too. If a call ends before any measurements exist, the summary cannot read a results group; continue with Resume rather than claiming a zero result.
+
+There is no guaranteed number of Resume calls. The line thermalization = 1000 only enables accumulation after a technical threshold; it does not establish equilibrium. In particular, movement of N alone does not prove that its full distribution has been explored.
+
+### 8.5 Save separate measurement blocks
+
+After burn-in, run this block to continue the same state but start new measurement accumulators:
 
 ~~~powershell
-.\scripts\run_rb87_bkt64.ps1 -Ensemble GrandCanonical -Mode Production -Processes 24 -ParameterFile $parameterFile -OutputDirectory $outputDirectory
-Copy-Item (Join-Path $outputDirectory 'Rb87_BKT_64_grand_canonical.out.h5') (Join-Path $outputDirectory 'production_01.out.h5')
+$blockNumber = 1
+$savedBlock = Join-Path $outputDirectory ('production_{0:D2}.out.h5' -f $blockNumber)
+if (Test-Path -LiteralPath $savedBlock) { throw 'Choose an unused block number.' }
+.\scripts\run_rb87_bkt64.ps1 -Ensemble GrandCanonical -Mode Production -Processes $processes -ParameterFile $parameterFile -OutputDirectory $outputDirectory
+Copy-Item -LiteralPath $resultFile -Destination $savedBlock
+py -3.13 .\scripts\summarize_bkt_result.py $savedBlock
 ~~~
 
-Repeat Production with production_02, production_03, and so on. Production continues the worldlines and RNG state but resets measured statistics. It does not create a statistically independent fresh chain.
+Run the same block with blockNumber = 2, then 3, and continue with unused numbers. Only save a block after the runner reports "Completed Production"; if it fails, do not relabel the previous result as new data. The copy preserves each block because the next invocation replaces my_gc.out.h5. The runner also archives the previous output, but those archive files can contain discarded or overlapping histories; do not pool them indiscriminately.
+
+Read the summary as follows:
+
+- Mean N is the measured mean number, and mean N divided by the number of sites is the mean filling.
+- Var(N) describes physical number fluctuations; the error on mean N describes uncertainty in its estimated mean. They are not the same thing.
+- The winding sum measures the response to a phase twist. Its comparison with 4/pi is a finite-size diagnostic, not by itself a transition measurement.
+- Compare N, energy, and winding between late blocks. A systematic drift means more equilibration or sampling is needed, even when an individual error bar looks small.
+
+Three blocks are a useful first comparison, not a convergence guarantee. Production does not create a new independent chain or discard another automatic warm-up interval. Consecutive blocks can remain correlated. Retain only a stationary portion, with the discarded prefix documented, and require agreement between independent starts.
+
+### 8.6 Restart later, change the physics, or repeat independently
+
+| What you want | What to do |
+|---|---|
+| Continue burn-in | Same files, directory and process count; use Resume |
+| Collect another separately accumulated block | Same setup; use Production and a new saved block number |
+| Change mu, beta, size, seed or other INI settings | Edit a new copy; choose a new output directory; use Fresh |
+| Test independence from the starting state | Same physical parameters, different seed and initial_particle_number; new directory and Fresh |
+
+For example, at 32 x 32 repeat with starting numbers around 1843, 2487 and 3072 and different seeds. Each family must lose memory of that guess and produce compatible late means. Section 9 automates this idea over a temperature grid.
+
+After closing PowerShell, reopen it, return to the project, and re-enter the four variable assignments in Section 8.3. Then use Resume or Production, not Fresh, for that existing calculation. Do not recreate the INI or delete the checkpoints. The files my_gc.clone.h5 and my_gc.clone.h5.1 are the two rank-specific checkpoints, not the numbered measurement blocks.
+
+To change temperature while keeping mu fixed, copy the INI, calculate beta = 11.1630863 / temperature_in_nK, and enter the resulting number in its beta line before a new Fresh run. Enter a number, not that arithmetic expression. Expect the resulting density to change. For a fixed-density temperature scan instead, you must tune mu separately at every temperature.
 
 ## 9. Recommended independent-start temperature audit
+
+This helper is an alternative to manually copying an INI for every point. Its command-line choices generate the parameter files and a manifest, then run the batch. If you want to edit every INI yourself, repeat Section 8 for each size, temperature and independent start instead.
+
+Do not edit the helper's generated INIs: their hashes are recorded in the manifest and changed files are rejected. To change that batch's settings, create a new AuditName. Resume and Production reuse the original manifest, not newly supplied size or temperature choices.
 
 The audit helper makes three starts for every point:
 
@@ -277,8 +365,8 @@ For the present Rb-87 grid, where t/kB = 11.1630863 nK, these points mean:
 | 0.29 | 3.4483 | 38.49 nK |
 | 0.32 | 3.1250 | 34.88 nK |
 
-Temperature increases when beta decreases. The selected range therefore runs
-from the colder expected superfluid side to the hotter expected normal side.
+Temperature decreases when beta increases. In the table's order, the scan runs
+from the hotter expected normal side to the colder expected superfluid side.
 
 Treat that entire call as burn-in. Inspect it:
 
@@ -387,7 +475,7 @@ The historical HDF5 names need interpretation:
 - Potential_Energy is interaction energy minus mu times N.
 - Total_Energy is the expectation of H0 minus mu N.
 
-The physical internal energy without the reservoir term is
+The Bose-Hubbard hopping-plus-interaction energy without the reservoir term is
 
 $$
 \langle H_0\rangle =
@@ -395,6 +483,14 @@ $$
 $$
 
 The summary helper prints both forms. It does not attach an error to the reconstructed H0 because the covariance between Total_Energy and N is not stored separately.
+
+The helper's label "physical internal energy" refers to that lattice H0. If comparing with the continuum finite-difference Hamiltonian, restore its kinetic-energy zero as well:
+
+~~~text
+continuum internal energy = Total_Energy + (mu_BH + 4*t)*mean_N
+~~~
+
+The extra 4*t per particle comes from the square-grid Laplacian. It changes the energy convention, not the sampled distribution. The winding-sum error printed by the helper is also only a component-quadrature estimate; it omits the covariance between the x and y measurements.
 
 ## 13. Independent numerical checks already completed
 
@@ -479,7 +575,7 @@ An L = 8 smoke test changed N, restored checkpoints, and reset statistics, but i
 
 One L = 16 Resume call reached the first expensive DensDens_CorrFun sample on only some MPI ranks. ALPS correctly refused to merge an observable present on only part of the communicator. The checkpoints remained valid, and another Resume completed successfully. The audit runner's smaller technical threshold avoids this edge case.
 
-The known on-site Density_Matrix estimator discrepancy from the exact-diagonalisation regression is unrelated to N, energy, number response, or winding. Density_Matrix is not used for the conclusions in this guide.
+The known on-site Density_Matrix estimator discrepancy was confirmed again in the independent finite-temperature check. It is inherited from the preceding PR and is not used for N, energy, number response, or winding. Read density from Number_of_particles divided by the site count, not from Density_Matrix[0]. No claim of corrected correlation-function normalization is made here.
 
 ## 14. What is enough for a BKT claim
 
