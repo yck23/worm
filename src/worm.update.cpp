@@ -565,7 +565,7 @@ int worm::INSERTKINK() {
     
 #ifdef UNISYS
   double weight_old = site_weight_offdiag[n_down][ n_up];
-  double weight_new = (dir == 1 ? bond_weight_offdiag[n_down][ n_up][ nbs_out][ nbs_mid] : bond_weight_offdiag[ n_down][ n_up][ nbs_mid][ nbs_out] );
+  double weight_new = (dir == 1 ? MyModel->bond_weight_offdiag(0, n_down, n_up, nbs_out, nbs_mid) : MyModel->bond_weight_offdiag(0, n_down, n_up, nbs_mid, nbs_out) );
   weight_new *= site_weight_offdiag[nbs_mid][ nbs_out];
 #else
   BondIndex b = bond_index[isite][ nbs];
@@ -681,7 +681,7 @@ int worm::DELETEKINK() {
   
   // weight of tunneling element
 #ifdef UNISYS
-  double weight_old = bond_weight_offdiag[it->before()][ it->after()][ n_B_link][ n_A_link] * site_weight_offdiag[worm_head_it->before()][ worm_head_it->after() ];
+  double weight_old = MyModel->bond_weight_offdiag(0, it->before(), it->after(), n_B_link, n_A_link) * site_weight_offdiag[worm_head_it->before()][ worm_head_it->after() ];
   double weight_new = site_weight_offdiag[n_B_link][ n_A_link];
 #else
   BondIndex b = bond_index[isite][linkdir];               // bond index of the kink
@@ -834,8 +834,8 @@ int worm::PASSINTERACTION(const int dir, const Diagram_type::iterator it) {
 #endif
     
 #ifdef UNISYS
-    double wgt_old = site_weight_offdiag[n_O][ n_B] * bond_weight_offdiag[n_B][ n_A][ n_B_link][ n_A_link];
-    double wgt_new = site_weight_offdiag[n_B][ n_A] * bond_weight_offdiag[n_O][ n_B][ n_B_link][ n_A_link];
+    double wgt_old = site_weight_offdiag[n_O][ n_B] * MyModel->bond_weight_offdiag(0, n_B, n_A, n_B_link, n_A_link);
+    double wgt_new = site_weight_offdiag[n_B][ n_A] * MyModel->bond_weight_offdiag(0, n_O, n_B, n_B_link, n_A_link);
 #else
     BondIndex b = bond_index[isite][linkdir];               // bond index of the kink
     double wgt_old = MyModel->site_weight_offdiag(isite, n_O, n_B) * MyModel->bond_weight_offdiag(b, n_B, n_A, n_B_link, n_A_link);
@@ -869,8 +869,8 @@ int worm::PASSINTERACTION(const int dir, const Diagram_type::iterator it) {
   else { // dir == -1
     StateType n_O = worm_head_it->after();
 #ifdef UNISYS
-    double wgt_old = site_weight_offdiag[n_A][ n_O] * bond_weight_offdiag[n_B][ n_A][ n_B_link][ n_A_link];
-    double wgt_new = site_weight_offdiag[n_B][ n_A] * bond_weight_offdiag[n_A][ n_O][ n_B_link][ n_A_link];
+    double wgt_old = site_weight_offdiag[n_A][ n_O] * MyModel->bond_weight_offdiag(0, n_B, n_A, n_B_link, n_A_link);
+    double wgt_new = site_weight_offdiag[n_B][ n_A] * MyModel->bond_weight_offdiag(0, n_A, n_O, n_B_link, n_A_link);
     
 #else
     BondIndex b = bond_index[isite][linkdir];               // bond index of the kink

@@ -293,7 +293,6 @@ private:
   std::vector<double> site_weight_diag;
   DMatrix bond_weight_diag;
   DMatrix site_weight_offdiag;
-  DTensor bond_weight_offdiag;
   bool range_check(const StateType n) {
     return ( (n >= nmin) && (n <= nmax));
   }

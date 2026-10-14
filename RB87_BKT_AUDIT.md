@@ -17,7 +17,7 @@ L = 64, N = 9948, U/t = 0.152, beta*t = 0.279077157506
 nmax = 16, canonical_window = 0.5, 24 MPI ranks
 ```
 
-Use [parameter_files/Rb87_BKT_64.ini](parameter_files/Rb87_BKT_64.ini) and [scripts/run_rb87_bkt64.ps1](scripts/run_rb87_bkt64.ps1) for the audited exact-N result. The simple instructions are in [BASIC_RUN_GUIDE.md](BASIC_RUN_GUIDE.md); the complete physics-to-analysis treatment is in [COMPLETE_BKT_GUIDE.md](COMPLETE_BKT_GUIDE.md). The smaller-size fixed-mu path and its convergence limits are isolated in [GRAND_CANONICAL_RUN_GUIDE.md](GRAND_CANONICAL_RUN_GUIDE.md); it is not yet validated at L = 64.
+Use [parameter_files/Rb87_BKT_64.ini](parameter_files/Rb87_BKT_64.ini) and [scripts/run_rb87_bkt64.ps1](scripts/run_rb87_bkt64.ps1) for the audited exact-N result. Its execution instructions are in [COMPLETE_BKT_GUIDE.md, Section 9](COMPLETE_BKT_GUIDE.md#9-commands-in-order-one-trustworthy-64-x-64-point). For a first practice run, use [BASIC_RUN_GUIDE.md](BASIC_RUN_GUIDE.md), which now starts with a 4 x 4 example. The smaller-size fixed-mu path and its convergence limits are in [GRAND_CANONICAL_RUN_GUIDE.md](GRAND_CANONICAL_RUN_GUIDE.md); it is not yet validated at L = 64.
 
 ## Physical sources and mapping
 

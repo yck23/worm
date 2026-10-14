@@ -2,9 +2,33 @@
 
 This is the guide to use when **chemical potential is fixed and particle number is measured**.
 
+## First, try a 30-second example
+
+In VS Code, open Terminal > New Terminal and select PowerShell. Paste these commands one at a time. Wait for each to finish. The executable and example INI are already supplied on this desktop.
+
+~~~powershell
+Set-Location '\\alfs1.physics.ox.ac.uk\al\kuo\projects\worm'
+~~~
+
+~~~powershell
+.\scripts\run_rb87_bkt64.ps1 -Ensemble GrandCanonical -Mode Fresh -Processes 1 -ParameterFile .\parameter_files\basic_bose_square.ini -OutputDirectory .\results\first_example
+~~~
+
+The middle command runs a 4 x 4 square lattice. Allow about 30-60 seconds and wait for "Completed Fresh."
+
+~~~powershell
+py -3.13 .\scripts\summarize_bkt_result.py .\results\first_example\basic_bose_square.out.h5
+~~~
+
+The last command prints the measurements. Expect "lattice: 4 x 4 = 16 sites", beta = 1, mu = 0.7, and a mean particle number around 23. Mean N divided by 16 is particles per site. These are simple practice parameters.
+
+For an explanation of each step, editing one parameter, and continuing this short run, use [BASIC_RUN_GUIDE.md](BASIC_RUN_GUIDE.md). If you have already run its first_example, continue there with Resume or choose a new output-folder name in both commands.
+
+## After the first example
+
 Independent audit completed: 2 October 2026, for commit bd0a6d9 against the preceding PR merge fb73840. Source comparison, fresh-run comparisons, small-system finite-temperature checks, checkpoint checks, the verified ALPSCore package, and an independent recalculation of the archived results are complete. The supported usage is grand-canonical number, energy, and winding measurements with explicit convergence checks. The L = 16, 24, and 32 scan shows BKT-like regimes, but residual drift near the crossover prevents a precision transition-temperature claim. The inherited on-site Density_Matrix estimator issue remains; do not use it to measure density or normalize correlations.
 
-For the commands in order, go straight to [Section 8: run one editable parameter file](#8-run-one-editable-parameter-file). It starts with a 32 x 32 example. For an automated temperature scan with independent starting states, continue to Section 9. The separately audited 64 x 64 reference is canonical; its success does not establish convergence of a 64 x 64 grand-canonical run.
+For a larger Rb-87 run, continue to [Section 8: run one editable parameter file](#8-run-one-editable-parameter-file). That 32 x 32 workflow uses longer calls and convergence checks. For an automated temperature scan with independent starting states, continue to Section 9. The separately audited 64 x 64 reference is canonical; its success does not establish convergence of a 64 x 64 grand-canonical run.
 
 If Markdown punctuation is visible, open the formatted preview in VS Code with Ctrl+Shift+V. The command blocks in this guide use tildes instead of backtick fences so the raw file is less distracting.
 
@@ -118,6 +142,7 @@ The original implementation is the continuous-time worm code described by [Sadou
 
 | File | Purpose |
 |---|---|
+| [parameter_files/basic_bose_square.ini](parameter_files/basic_bose_square.ini) | Supplied 4 x 4, 30-second first example |
 | [parameter_files/Rb87_BKT_64_grand_canonical.ini](parameter_files/Rb87_BKT_64_grand_canonical.ini) | Editable one-point template |
 | [scripts/run_rb87_bkt64.ps1](scripts/run_rb87_bkt64.ps1) | Runs one parameter file and one chain family |
 | [scripts/run_gc_bkt_audit.ps1](scripts/run_gc_bkt_audit.ps1) | Generates and runs low/mid/high starts for a size-temperature grid |

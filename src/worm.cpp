@@ -243,17 +243,13 @@ worm::worm(parameters_type const & parameters, std::size_t seed_offset) : alps::
   site_weight_diag.resize(nmax - nmin + 1);
   bond_weight_diag.resize(boost::extents[nmax - nmin + 1][nmax - nmin + 1]);
   site_weight_offdiag.resize(boost::extents[nmax - nmin + 1][nmax - nmin + 1]);
-  bond_weight_offdiag.resize(boost::extents[nmax - nmin + 1][nmax - nmin + 1][nmax - nmin + 1][nmax - nmin + 1]);
+  // Evaluate bond hopping weights on demand: a dense four-state table
+  // requires O((nmax - nmin + 1)^4) memory on every MPI rank.
   for (StateType n = 0; n < nmax - nmin + 1; n++ ) {
     site_weight_diag[n] = MyModel->site_weight_diag(0,n + nmin);
     for (StateType m = 0; m < nmax - nmin + 1; m++ ) {
       bond_weight_diag[n][m] = MyModel->bond_weight_diag( 0,n + nmin, m + nmin);
       site_weight_offdiag[n][m] = MyModel->site_weight_offdiag(0, n+nmin, m+nmin);
-      for (StateType k = 0; k < nmax - nmin + 1; k++ ) {
-        for (StateType l = 0; l < nmax - nmin + 1; l++ ) {
-          bond_weight_offdiag[n][m][k][l] = MyModel->bond_weight_offdiag(0, n+nmin, m+nmin,k+nmin,l+nmin);
-        }
-      }
     }
   }
 #endif

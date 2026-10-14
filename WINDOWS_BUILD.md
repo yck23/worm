@@ -2,6 +2,8 @@
 
 This repository uses a pinned ALPSCore 2.3.3 commit and a small MinGW compatibility patch. The build creates a bundled runtime package in `dist/windows-square`; Windows system libraries and the Microsoft MPI runtime remain host prerequisites.
 
+The executable package is already built on this desktop. To try the program immediately, use [BASIC_RUN_GUIDE.md](BASIC_RUN_GUIDE.md): it has three commands for a 4 x 4 example that finishes in about a minute. The build instructions below are for a missing package or source/dependency changes.
+
 ## Prerequisites
 
 - CMake in `C:\Program Files\CMake`

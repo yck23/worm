@@ -2,11 +2,13 @@
 
 This document is a self-contained guide to the physics, Monte Carlo algorithm, code, Windows build, Rb-87 mapping, and numerical workflow in this repository.
 
+If you are learning how to launch the program, start with [BASIC_RUN_GUIDE.md](BASIC_RUN_GUIDE.md). Its first three terminal commands run and read a supplied 4 x 4 example in about a minute. Return here for the physics and larger calculations afterward.
+
 Guide status: independent audit completed on 2 October 2026 for commit bd0a6d9, compared with the preceding PR merge fb73840. The implementation changes described below are committed; this guide update does not change the simulation code. The audit supports the number, energy and winding workflow, with the convergence and on-site correlation-estimator limitations stated below. To read the formatted version in VS Code, press Ctrl+Shift+V. Backticks and dollar signs visible in a plain-text editor are Markdown/LaTeX formatting marks, not characters to type unless they occur inside a command block.
 
 The immediate target is a homogeneous, periodic, two-dimensional Bose gas represented by a 64 x 64 Bose-Hubbard lattice. The supplied parameter set approximates the Rb-87 regime. It is a controlled lattice calculation of BKT-like physics.
 
-For chemical-potential control, start with the copy-and-edit parameter-file procedure in [GRAND_CANONICAL_RUN_GUIDE.md, Section 8](GRAND_CANONICAL_RUN_GUIDE.md#8-run-one-editable-parameter-file). For a fixed exact particle number, use [BASIC_RUN_GUIDE.md](BASIC_RUN_GUIDE.md). The numerical evidence is tabulated in [RB87_BKT_AUDIT.md](RB87_BKT_AUDIT.md), and the reproducible compiler/dependency details are in [WINDOWS_BUILD.md](WINDOWS_BUILD.md).
+For larger chemical-potential-controlled runs, use the copy-and-edit parameter-file procedure in [GRAND_CANONICAL_RUN_GUIDE.md, Section 8](GRAND_CANONICAL_RUN_GUIDE.md#8-run-one-editable-parameter-file). For the fixed-particle-number 64 x 64 reference, use Section 9 below. The numerical evidence is tabulated in [RB87_BKT_AUDIT.md](RB87_BKT_AUDIT.md), and the reproducible compiler/dependency details are in [WINDOWS_BUILD.md](WINDOWS_BUILD.md).
 
 ## 0. Orientation: what is fixed and what is measured
 
