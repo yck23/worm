@@ -1,0 +1,62 @@
+{
+  "beta": 0.32,
+  "lattice": [
+    128,
+    128
+  ],
+  "particle_number": 30000,
+  "seed": 11199,
+  "production_blocks_stable": true,
+  "stability_reasons": [],
+  "blocks": [
+    {
+      "label": "08_production",
+      "kind": "candidate production",
+      "min_sweeps": 68127,
+      "max_sweeps": 73167,
+      "mpi_result_collected": true,
+      "result": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t032\\monitor_20261015\\08_production.out.h5",
+      "winding_rank_mean": [
+        0.5348381245857301,
+        0.565002795028484
+      ],
+      "energy_rank_mean": 14025.509221975874,
+      "production_number": 1,
+      "production_copy": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t032\\Rb87_BKT_64prod01.h5",
+      "sha256": "8f83323ea21e5a202c2643ea0b1e25d3aab1626fd102a3581d5993a7231f6325"
+    },
+    {
+      "label": "09_production",
+      "kind": "candidate production",
+      "min_sweeps": 67722,
+      "max_sweeps": 73777,
+      "mpi_result_collected": true,
+      "result": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t032\\monitor_20261015\\09_production.out.h5",
+      "winding_rank_mean": [
+        0.5913405412684113,
+        0.5734306054839539
+      ],
+      "energy_rank_mean": 14061.0075378767,
+      "production_number": 2,
+      "production_copy": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t032\\Rb87_BKT_64prod02.h5",
+      "sha256": "33a90ab9c9a5f40970b79460f882bb73ca6eee9d1ff076ca0eac8ba4c51648a7"
+    },
+    {
+      "label": "10_production",
+      "kind": "candidate production",
+      "min_sweeps": 67210,
+      "max_sweeps": 73634,
+      "mpi_result_collected": true,
+      "result": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t032\\monitor_20261015\\10_production.out.h5",
+      "winding_rank_mean": [
+        0.5651531347818245,
+        0.5514299312140661
+      ],
+      "energy_rank_mean": 14059.5994698152,
+      "production_number": 3,
+      "production_copy": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t032\\Rb87_BKT_64prod03.h5",
+      "sha256": "1646a7660c7de928284825e0b6c8d76dac162e32ba795b5867d98a2be1863600"
+    }
+  ],
+  "note": "Single seed family; independent-seed agreement remains unverified."
+}

@@ -6,6 +6,8 @@ If you are learning how to launch the program, start with [BASIC_RUN_GUIDE.md](B
 
 Guide status: independent audit completed on 2 October 2026 for commit bd0a6d9, compared with the preceding PR merge fb73840. The implementation changes described below are committed; this guide update does not change the simulation code. The audit supports the number, energy and winding workflow, with the convergence and on-site correlation-estimator limitations stated below. To read the formatted version in VS Code, press Ctrl+Shift+V. Backticks and dollar signs visible in a plain-text editor are Markdown/LaTeX formatting marks, not characters to type unless they occur inside a command block.
 
+Update, 24 October 2026: [Section 11.6](#116-equal-time-susceptibility-and-reliable-error-bars) documents the equal-time susceptibility, the measurement settings and simulator additions needed for reliable errors, and the committed L = 32, 64, 128 analysis. These newer results are a separate clean-system scan with a different density and cutoff from the audited reference below. The scalar susceptibility accumulator and time-series export described there are proposed work, not implemented features.
+
 The immediate target is a homogeneous, periodic, two-dimensional Bose gas represented by a 64 x 64 Bose-Hubbard lattice. The supplied parameter set approximates the Rb-87 regime. It is a controlled lattice calculation of BKT-like physics.
 
 For larger chemical-potential-controlled runs, use the copy-and-edit parameter-file procedure in [GRAND_CANONICAL_RUN_GUIDE.md, Section 8](GRAND_CANONICAL_RUN_GUIDE.md#8-run-one-editable-parameter-file). For the fixed-particle-number 64 x 64 reference, use Section 9 below. The numerical evidence is tabulated in [RB87_BKT_AUDIT.md](RB87_BKT_AUDIT.md), and the reproducible compiler/dependency details are in [WINDOWS_BUILD.md](WINDOWS_BUILD.md).
@@ -212,11 +214,11 @@ The diagonal potential energy is accumulated from the occupation segments. Parti
 
 The code distinguishes inexpensive $O(1)$ measurements from $O(N_{\rm sites})$ arrays:
 
-- `Nmeasure=1` records energy, particle number, and winding after every completed worm excursion that is eligible for measurement.
+- `Nmeasure=1` records energy, particle number, and winding after every eligible closed-to-closed update call, including calls whose insertion is rejected.
 
-- `Nmeasure2=10000` records the full spatial correlations only every ten thousand excursions in the audited file.
+- `Nmeasure2=10000` flushes the spatial measurements every ten thousand eligible update calls in the audited file. For `Density_Matrix`, equal-time worm hits accumulate throughout that interval and are divided by `Nmeasure2` before the vector is sent to ALPSCore. A saved density-matrix sample is therefore an interval estimate, not one instantaneous configuration sampled every ten thousand calls.
 
-The latter setting makes the 64 x 64 test affordable, but it leaves only about one hundred correlation samples per 15-minute block. Those arrays are not adequate for a reliable fit of $g_1(r)\sim r^{-\eta}$; the BKT conclusion must therefore rest primarily on winding, block stability, and finite-size behavior.
+The latter setting makes the 64 x 64 test affordable, but it leaves only about one hundred correlation samples per 15-minute block. Those audited arrays are not adequate for a reliable fit of $g_1(r)\sim r^{-\eta}$; the BKT conclusion must therefore rest primarily on winding, block stability, and finite-size behavior. Section 11.6 explains how the newer correlation collection and susceptibility analysis differ, and how to collect errors that include spatial and Monte Carlo correlations.
 
 ## 3. What the original Sadoune-Pollet code does
 
@@ -572,7 +574,7 @@ The starting point is [`parameter_files/Rb87_BKT_64.ini`](parameter_files/Rb87_B
 | `Ntest` | 1,000,000 | Interval for expensive deep consistency checks. A final validation is also performed. |
 | `Nsave` | 100,000,000 | Update-based checkpoint interval; ALPS scheduling/checkpoint behavior also responds to stopping. The large value avoids excessive network-file writes. |
 | `Nmeasure` | 1 | Measure cheap energy/number/winding observables after each eligible completed worm excursion. |
-| `Nmeasure2` | 10,000 | Measure expensive full spatial arrays sparsely. Adequate for smoke diagnostics, not precision correlation exponents. |
+| `Nmeasure2` | 10,000 | Flush the accumulated density-matrix histogram, normalized by this interval, and record the other spatial arrays. Smaller values give more intervals for blocking analysis at extra measurement cost; they do not create independent samples. See Section 11.6. |
 | `C_worm` | 2.0 | Relative statistical weight of open configurations. It tunes time in the Green-function sector. |
 | `p_insertworm` | 1.0 | Closed-sector insertion choice; normalized separately. |
 | `p_moveworm` | 0.4 | Open-sector temporal-head-move probability. |
@@ -1023,6 +1025,135 @@ A defensible result would contain all of the following:
 
 The current audit verifies the build, ensemble, Hamiltonian, energy estimator, winding estimator, and retained checkpoint invariants. It independently replicates the late L = 64, 40 nK energy and winding point and demonstrates low/near/high-temperature BKT-like winding. It still lacks the multi-size, multi-temperature, replicated data set and continuum-spacing study required by the list above. It therefore must not be presented as a precision measurement of $T_{\rm BKT}$.
 
+
+### 11.6 Equal-time susceptibility and reliable error bars
+
+This section accompanies the committed [comparison notebook](results/cleanRbRDM/density_matrix_comparison.ipynb) and [result inventory](results/README.md). The notebook already computes susceptibility means and plots. Autocorrelation and blocking analyses require scalar histories and convergence work in the simulation; editing an INI alone does not add the missing history. Independent equilibrated replica summaries can also provide errors, but the existing rank summaries support only the coarse estimate described below.
+
+#### Which physical quantity is being measured?
+
+Carleo et al. define an equal-time spatial integral in their [superfluid-transition analysis](https://arxiv.org/html/1305.3032v3). On the periodic square lattice, define the translation-averaged one-body density matrix and susceptibility by
+
+$$
+G(\mathbf r)=\frac{1}{N_s}\sum_i\langle b_i^\dagger b_{i+\mathbf r}\rangle,
+\qquad N_s=L^2,
+$$
+
+$$
+\chi_s=\frac{1}{N_s}\sum_{ij}\langle b_i^\dagger b_j\rangle
+      =\sum_{\mathbf r}G(\mathbf r)
+      =\langle b_{\mathbf k=0}^\dagger b_{\mathbf k=0}\rangle,
+\qquad b_{\mathbf k=0}=N_s^{-1/2}\sum_i b_i.
+$$
+
+Thus chi_s is a zero-momentum occupation. In a uniform system its fraction is chi_s/N; chi_s itself is not a fraction. In an inhomogeneous system the zero-momentum mode need not be the most occupied natural orbital. The current notebook and measurements concern the uniform periodic model, not the paper's disorder ensemble.
+
+The names below refer to different quantities and must not be interchanged:
+
+| Quantity | Definition or estimator | Physical meaning |
+|---|---|---|
+| Equal-time susceptibility chi_s | Sum of the complete one-body density matrix over displacement | Spatial coherence / zero-momentum occupation |
+| Superfluid stiffness rho_s | `Winding_number_squared` summed over x,y and divided by 2 beta | Response to a boundary phase twist; see Section 1.3 |
+| Number susceptibility | beta Var(N)/N_s in the grand-canonical ensemble | Derivative of mean filling with respect to chemical potential; zero number variance in a fixed-N run does not imply an incompressible material |
+| Static, time-integrated field response | Integral of the time-dependent Green function over imaginary time and space | A different observable; the zero Matsubara-frequency component is not the equal-time sum |
+| Fit chi-squared | Sum of squared residuals divided by assumed variances | A goodness-of-fit statistic, not a thermodynamic susceptibility |
+
+In two dimensions the continuum mapping is approximately Psi(r_i) = b_i/a, where a is the grid spacing. The integration measures and volume normalization then cancel the powers of a: `(1/(N_s*a**2))*a**4/a**2 = 1/N_s`. The lattice susceptibility is dimensionless occupation; do not multiply its sum by another a squared. This mapping still requires lattice-spacing convergence for quantitative continuum predictions.
+
+#### Correct normalization of the saved data
+
+For Bose-Hubbard, the stored `Density_Matrix` vector has one entry per periodic displacement, with flat index dx + L*dy. Its worm normalization is already applied in [measure_corrfun()](src/worm.cpp). Sum every displacement, including the corners of the periodic square. An axial profile or radial average truncated at L/2 does not contain the full sum. Do not divide again by L squared, multiply by beta, or normalize by G(0).
+
+The special on-site estimator is known to be biased (Section 8.8). Use the operator identity G(0) = mean(N)/N_s instead:
+
+$$
+\widehat\chi_s=\sum_{\mathbf r\ne0}\widehat G(\mathbf r)
+                   +\frac{\langle N\rangle}{N_s}.
+$$
+
+For a canonical production this is simply `G.sum() - G[0,0] + N/L**2`, using the unshifted matrix. N/L squared is exact and contributes no statistical error. The correction removes the known on-site defect; it does not prove off-site equilibration or convergence. For grand-canonical data, use measured mean N and retain its covariance with the off-site sum when estimating the error.
+
+#### What the measurement parameters actually control
+
+The following are existing parameters, not new susceptibility settings:
+
+| Parameter/control | Meaning for collection | Practical choice or check |
+|---|---|---|
+| `Nmeasure` | Interval in eligible closed-to-closed updates for number, energy and winding measurements | Keep 1 for the pilot and record these diagnostics alongside susceptibility. It does not control the density-matrix histogram flush. |
+| `Nmeasure2` | Number of eligible updates accumulated into one density-matrix vector before division by the interval and insertion into ALPSCore | The old scan uses 10000; the recollection uses 1000. Benchmark 100 or 1000 for a new pilot if full-array measurement cost permits. These are starting choices, not guarantees of independent measurements. |
+| `thermalization` | Initial per-rank sweep threshold before statistics are collected | Determine adequate burn-in from independent starts and late stability. Crossing the configured threshold alone is insufficient. |
+| `sweeps` | Production progress/stop target; MPI completion aggregates progress across ranks | Do not read this as the sample count of every rank. Verify actual per-rank eligible updates and histogram counts; scheduler checks can overshoot. |
+| `runtimelimit` | Wall-clock cap for the invocation | A 900-second block does not guarantee any fixed number of samples or decorrelation times. Prefer comparable production sweep counts per rank and retain actual counts. |
+| `Nsave` | Checkpoint cadence | Protects restart state; it is neither an independent-sampling interval nor a statistical block size. |
+| `C_worm` | Auxiliary worm weight already accounted for by the estimator | The scan uses 2.0. Changing it can change efficiency; it must not change the converged physical result. Do not introduce an extra C_worm factor in notebook analysis. |
+| MPI rank count and seed | Separate chains with distinct RNG streams | Keep rank identities and distinct streams. Preserve rank count on checkpoint continuation. Copying the same RNG state to multiple ranks does not create independent replicas. |
+| `--reset-statistics` | Clears accumulators/counters while retaining configuration and RNG state | Starts a new measurement window, not a newly equilibrated or independent chain. Preserve the chronology of continuation windows. |
+
+For a fresh statistics window with S_r eligible update calls on rank r, the complete density-histogram count is floor(S_r/Nmeasure2). MPI merges the sums of those counts; a partial histogram at the end of a window is not yet a completed sample. Checkpoints preserve that partial histogram and its counter; a deliberate statistics reset discards it. Changing the flush interval therefore changes how much partial data can be discarded at boundaries.
+
+For example, 4500 eligible updates and Nmeasure2 = 1000 give only four complete scalar/vector interval estimates on that rank. Nmeasure2 = 100 gives 45 estimates covering roughly the same Monte Carlo history, with finer time resolution and more measurement overhead. It does not multiply the amount of independent physical information by ten. An accepted insertion produces a variable-length worm excursion; a rejected insertion leaves the update closed. Neither type of update is one sweep of every site or a unit of physical time.
+
+The following fragment describes the existing recollection cadence; it is not a convergence-certified production recipe:
+
+```ini
+Nmeasure = 1
+Nmeasure2 = 1000
+C_worm = 2.0
+runtimelimit = 900
+```
+
+Set the physics, cutoff, burn-in and production target separately. Continuing a checkpoint restores its saved parameters: editing a nearby INI does not change them. The recollection controller explicitly edits its own copied checkpoint parameters and resets its statistics; it is not a general instruction to mutate existing production archives. Start a new run for changed physics, and use documented restore handling for any measurement-cadence change.
+
+#### Simulator work needed to measure the error of the sum
+
+The current source has a vector `LogBinningAccumulator` for `Density_Matrix`, but no dedicated equal-time susceptibility accumulator or ordered scalar history. Marginal errors for each displacement cannot reconstruct the error of their sum without spatial covariance.
+
+The minimal implementation is to form one scalar from each complete histogram before resetting it:
+
+$$
+X_b=\frac{N}{N_s}+\sum_{\mathbf r\ne0}G_b(\mathbf r).
+$$
+
+Register a scalar log-binning accumulator and insert X_b at the same point as the vector. Sum first, then estimate the variance: this automatically includes all spatial covariance terms. In a grand-canonical implementation, accumulate N over the same closed-update interval and use its interval mean in X_b. Then the scalar fluctuations also include the covariance between density and coherence.
+
+Also save the ordered X_b values, rank ID, sweep/interval index, and interval length. A scalar series is inexpensive and supports later autocorrelation, blocking and resampling checks. Keep separate histories for separate ranks. For a more efficient follow-up implementation, accumulate off-site equal-time worm contributions into a scalar counter and flush it more frequently than the expensive spatial arrays. Include intervals with zero worm contributions and normalize by the actual closed-update count; selecting only successful hits changes the estimator. Any independent scalar interval would need a new, explicitly implemented parameter. No such parameter exists in this commit.
+
+The implementation must cover accumulator registration, thermalization/reset, checkpoint save/load of partial counters and histories, and MPI merging while retaining rank identity. Rebuild after this source change. Before production, check that scalar means agree with the corrected vector sums on identical measurement windows, that a resumed run matches an uninterrupted one, and that explicit resets remove previous statistics without changing the configuration. Repeat a small exact-diagonalization/identity benchmark and a C_worm invariance check. Saving a scalar does not repair a biased estimator by itself.
+
+#### Collecting and judging a usable error bar
+
+1. Equilibrate independent chains with distinct streams. Compare energy, winding, susceptibility and, for grand-canonical runs, density across contrasting starts. A stable energy alone is insufficient to certify slow coherence or winding modes.
+2. Run a pilot at the largest size near the suspected transition and at any slower point. Retain short scalar intervals so the susceptibility autocorrelation can be estimated. Choose production length from that pilot, rather than from an arbitrary number of 900-second invocations.
+3. Reblock each rank's scalar history into consecutive groups of 1, 2, 4, 8, ... intervals. Never create artificial time adjacency across different ranks. For B equal-length block means Y_b, estimate `SE = std(Y_b, ddof=1)/sqrt(B)` only when those blocks are long enough to be approximately independent.
+4. Plot SE against block length. Seek a plateau over several useful bin sizes while many blocks remain, then extend production and check that the result persists. A practical target is 50-100 sufficiently long blocks; it is a planning target, not a proof of equilibration. A last binning level containing only two or three blocks is not a reliable plateau. Autocorrelation-based analysis is another option; see [Wolff](https://arxiv.org/abs/hep-lat/0306017).
+5. Compare rank means, early/late windows and independent-seed groups. Combine independent rank means with weights w_r proportional to their measured sample counts and normalized so their sum is one; if their per-rank errors are valid, the combined variance is sum(w_r squared times SE_r squared). For equal sampling lengths and settings the weights are equal. Keep both the individual diagnostics and the combined estimate.
+6. Quote statistical error separately from occupation-cutoff, lattice-spacing, fit-window and finite-size systematics. No statistical resampling diagnoses a common equilibration bias shared by all chains.
+
+For planning, if a blocking plateau appears at k recorded intervals and at least B long blocks are wanted per chain, that chain needs at least B*k*Nmeasure2 eligible update calls after burn-in when using the minimal histogram-cadence implementation. For example, k = 16, B = 50 and Nmeasure2 = 1000 require 800000 eligible updates per chain. This arithmetic illustrates the cost; k must be measured, not assumed. Shorter output intervals alone cannot remove the autocorrelation requirement.
+
+#### What can be recovered from the existing results?
+
+The committed scan has L = 32, 64, 128, nine beta values and three production windows per point: 81 selected HDF5 files and 27 susceptibility means. All sizes have t = 1, U = 0.152, V = 0, nmax = 5 and filling 1.8310546875, with N = 1875, 7500, 30000. This differs from the nmax = 16, N = 9948, L = 64 audited reference. Cutoff convergence for that reference does not certify the present nmax = 5 dataset. Folder names encode beta, while notebook temperature axes use T = 1/beta.
+
+Use the eight new `cleanRbRDM` points in preference to their older counterparts. The notebook already makes that selection; several superseded old arrays are missing, stale or lack finite errors. The new outputs have finite marginal errors, but only one stored error-bin level. At L = 128, beta = 0.70 the three new windows contain 33, 34 and 33 histograms merged over eight ranks, with only 4-5 per rank per window.
+
+Those eight recollected points retain `prod*.rank_means.npz`. An exploratory uncertainty can be obtained by summing each rank's full off-site matrix, adding exact density, and count-weighting its three continuation windows into one rank estimate. Apply a delete-one-rank jackknife to the overall count-weighted mean, recomputing the weights each time. With R ranks and leave-one-rank-out estimates chi_(-r), its variance estimate is
+
+$$
+\mathrm{SE}_{\rm jack}^2=\frac{R-1}{R}\sum_r
+\left[\chi_{(-r)}-\frac{1}{R}\sum_s\chi_{(-s)}\right]^2.
+$$
+
+Treat the eight ranks as the units, not the 24 rank/window combinations or the individual spatial bins. This preserves spatial covariance and dependence between continuation windows, conditional on independently sampled, equilibrated rank histories. Eight units give only a coarse uncertainty estimate; their common bias is not measured. The other 19 points have no such saved rank summaries in the committed selection. The current notebook therefore shows production dots and weighted means without susceptibility error bars. The raw scalar time histories needed for a blocking plateau cannot be reconstructed from the saved marginal errors.
+
+#### Using susceptibility for the BKT analysis
+
+Below the transition, algebraic coherence gives chi_s proportional to L^(2-eta); at criticality eta = 1/4 gives the leading power L^(7/4). Compare chi_s/L^(7/4) across sizes at the same temperature and physical controls. In the normal regime the susceptibility eventually saturates with size; this can require L much larger than the correlation length.
+
+At criticality, leading logarithmic corrections give chi_s proportional to L^(7/4)*[ln(L/L0)]^(1/8), with further finite-size corrections; see [Hasenbusch's analysis](https://arxiv.org/html/cond-mat/0502556v2). An approximate crossing is a useful diagnostic, not an exact common intersection or a precision transition estimate. Check size drift and compare the independent winding-stiffness diagnostic.
+
+For a fixed L, propagate a valid susceptibility error as `SE_scaled = SE_chi / L**1.75`. To estimate a crossing/fit temperature, resample independent ranks or sufficiently long time blocks and repeat the entire size/temperature analysis, preserving any dependence from shared chains. Report variation under size exclusion, interpolation choices and logarithmic corrections separately from the statistical interval.
+
 ## 12. Common mistakes and recovery
 
 ### Rebuilding after every parameter edit
@@ -1098,6 +1229,12 @@ The validated executable has optional Matsubara measurements disabled, and the s
 - Abel Beregi, [Probing universality of 2D quantum systems with bilayer Bose gases](https://ora.ox.ac.uk/objects/uuid:b2f4f0a1-8576-4528-bbd3-557d273cfbdd), Oxford DPhil thesis (2024).
 
 - Daniel A. Steck, [Rubidium 87 D Line Data](https://steck.us/alkalidata/rubidium87numbers.pdf).
+
+- Giuseppe Carleo, Guilhem Boeris, Markus Holzmann and Laurent Sanchez-Palencia, [Universal Superfluid Transition and Transport Properties of Two-Dimensional Dirty Bosons](https://arxiv.org/html/1305.3032v3).
+
+- Martin Hasenbusch, [The two dimensional XY model at the transition temperature: A high precision Monte Carlo study](https://arxiv.org/html/cond-mat/0502556v2).
+
+- Ulli Wolff, [Monte Carlo errors with less errors](https://arxiv.org/abs/hep-lat/0306017).
 
 ## 15. Minimal final checklist
 

@@ -1,0 +1,50 @@
+{
+  "file": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\cleanRbRDM\\l128t039\\rdmprod02.h5",
+  "diagonal_count": 114885,
+  "histogram_count": 110,
+  "finite_error_fraction": 1.0,
+  "min_histograms_per_rank": 13,
+  "max_histograms_per_rank": 14,
+  "ranks": [
+    {
+      "rank": 0,
+      "diagonal_count": 14775,
+      "histogram_count": 14
+    },
+    {
+      "rank": 1,
+      "diagonal_count": 14960,
+      "histogram_count": 14
+    },
+    {
+      "rank": 2,
+      "diagonal_count": 14178,
+      "histogram_count": 14
+    },
+    {
+      "rank": 3,
+      "diagonal_count": 13647,
+      "histogram_count": 13
+    },
+    {
+      "rank": 4,
+      "diagonal_count": 13150,
+      "histogram_count": 13
+    },
+    {
+      "rank": 5,
+      "diagonal_count": 14970,
+      "histogram_count": 14
+    },
+    {
+      "rank": 6,
+      "diagonal_count": 14539,
+      "histogram_count": 14
+    },
+    {
+      "rank": 7,
+      "diagonal_count": 14666,
+      "histogram_count": 14
+    }
+  ]
+}

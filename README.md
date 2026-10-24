@@ -17,6 +17,7 @@ fork's verified Windows/MinGW build and the Rb-87 calculations, start with:
   * [BASIC_RUN_GUIDE.md](BASIC_RUN_GUIDE.md) first: three commands to run and read a supplied 4 x 4 example in about a minute, then optional parameter editing and restarts;
   * [GRAND_CANONICAL_RUN_GUIDE.md](GRAND_CANONICAL_RUN_GUIDE.md) for the same short example followed by larger Rb-87 runs with mu fixed and N measured;
   * [COMPLETE_BKT_GUIDE.md](COMPLETE_BKT_GUIDE.md) for the physics, path integral, implementation, BKT analysis, and the fixed-N reference run;
+  * [results/README.md](results/README.md) for the committed clean-system density-matrix, winding and susceptibility analysis and its input results;
   * [RB87_BKT_AUDIT.md](RB87_BKT_AUDIT.md) for numerical evidence and limitations; and
   * [WINDOWS_BUILD.md](WINDOWS_BUILD.md) for the pinned ALPSCore dependency and reproducible build.
 
