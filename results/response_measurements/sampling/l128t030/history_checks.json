@@ -1,0 +1,70 @@
+{
+  "time_utc": "2026-10-25T23:19:44.520667+00:00",
+  "ranks": [
+    {
+      "rank": 0,
+      "blocks": 2668,
+      "partial_count": 8,
+      "sweeps": 76688
+    },
+    {
+      "rank": 1,
+      "blocks": 2994,
+      "partial_count": 5,
+      "sweeps": 79945
+    },
+    {
+      "rank": 2,
+      "blocks": 3051,
+      "partial_count": 8,
+      "sweeps": 80518
+    },
+    {
+      "rank": 3,
+      "blocks": 2626,
+      "partial_count": 2,
+      "sweeps": 76262
+    },
+    {
+      "rank": 4,
+      "blocks": 3013,
+      "partial_count": 0,
+      "sweeps": 80130
+    },
+    {
+      "rank": 5,
+      "blocks": 3423,
+      "partial_count": 5,
+      "sweeps": 84235
+    },
+    {
+      "rank": 6,
+      "blocks": 2877,
+      "partial_count": 9,
+      "sweeps": 78779
+    },
+    {
+      "rank": 7,
+      "blocks": 2890,
+      "partial_count": 2,
+      "sweeps": 78902
+    }
+  ],
+  "merged_output": "run01.h5",
+  "merged_checks": [
+    {
+      "observable": "Superfluid_susceptibility",
+      "count": 23542,
+      "merged_mean": 4695.844432905153,
+      "rank_weighted_mean": 4695.844432905154
+    },
+    {
+      "observable": "Winding_number_squared_sum",
+      "count": 23542,
+      "merged_mean": 0.3891258176875371,
+      "rank_weighted_mean": 0.3891258176875371
+    }
+  ],
+  "status": "verified",
+  "history_includes": "All completed response blocks since initial reset; partial blocks only in checkpoints."
+}

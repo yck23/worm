@@ -1,0 +1,38 @@
+{
+  "dataset": "final_prod03_baseline",
+  "points": 27,
+  "rank_records": 520,
+  "inputs": {
+    "results/response_measurements/audit/checkpoint_rank_observables.csv": "9e40ae36b32cfe6699edac6ca82a7a904271f971eff4358cc0c438e1acdb7c66",
+    "results/response_measurements/audit/checkpoint_production_matches.csv": "099c2176ae8752c17b6e7eb54fdd4b4c7d88256889d615082f6bc76770b7a78e",
+    "results/response_measurements/audit/drift_audit.csv": "2b37e893a9b81f33094818d20c84d0ad385e6da30d57fda55aeebbddcf5573c9"
+  },
+  "generator": "scripts/prepare_response_dataset.py",
+  "generator_sha256": "83f458100e038a80efd509ed58f85746c719016281d07c2105927c9dc096cf39",
+  "production": 3,
+  "original_checkpoint_access_required": false,
+  "susceptibility": "chi = N/L^2 + sum(G[r] for r != 0)",
+  "scaled_susceptibility": "chi_scaled = chi / L^(7/4)",
+  "winding": "W2 = Wx2 + Wy2",
+  "weights": {
+    "chi": "complete G histogram counts",
+    "W2": "diagonal winding measurement counts"
+  },
+  "standard_error": "Delete one complete rank; recompute weighted mean; sqrt((R-1)/R * sum((leave_one_out-mean_leave_one_out)^2)).",
+  "nmax": 5,
+  "nmax_provenance": "Every rank matched the selected prod03 parameters including nmax=5 in the checkpoint audit.",
+  "equilibrium_status": "conditional_unverified",
+  "precision_targets": {
+    "relative_SE": 0.05,
+    "optional_W2_absolute_SE": 0.02
+  },
+  "limitations": [
+    "Rank streams must be independent and equilibrated; configured thermalization is not evidence of equilibrium.",
+    "Only prod03 enters these estimates. Do not attach these SEs to a pooled three-production mean.",
+    "Whole-rank scalar resampling includes spatial covariance and covariance of the two winding components.",
+    "No scalar time series or demonstrated blocking plateau is available in this baseline.",
+    "The fewer-than-20-histograms flag is descriptive, not a statistical convergence test.",
+    "Precision flags assess sampling SE only, not bias or equilibrium.",
+    "Drift screening is retained separately; failure to reject drift is not proof of stationarity."
+  ]
+}

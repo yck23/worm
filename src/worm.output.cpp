@@ -24,6 +24,8 @@ void worm::print_params(std::ostream& os) const {
   os << "# Nsave                                             : " << Nsave<< "\n";
   os << "# Nmeasure O(1)                                     : " << Nmeasure << "\n";
   os << "# Nmeasure O(N)                                     : " << Nmeasure2 << "\n";
+  os << "# Nresponse_measure (0 disables)                    : " << Nresponse_measure << "\n";
+  os << "# Nresponse_max_blocks                              : " << Nresponse_max_blocks << "\n";
   os << "# energy shift                                      : " << E_off << "\n";
   os << "# weight worm configurations                        : " << C_worm << "\n";
   os << "# update probability insert worm                    : " << update_prob[update_tag::insertworm]    << "\t" << update_prob_cuml[update_tag::insertworm]    << "\n";
@@ -88,6 +90,20 @@ void worm::save(alps::hdf5::archive & ar) const {
   ar["checkpoint/configuration/nrvertex"] << nrvertex;
   ar["checkpoint/configuration/nr_of_particles"] << number_of_particles;
   ar["checkpoint/configuration/state"] << state;
+  if (Nresponse_measure > 0) {
+    ar["checkpoint/response/schema_version"] << 1;
+    ar["checkpoint/response/interval"] << Nresponse_measure;
+    ar["checkpoint/response/max_blocks"] << Nresponse_max_blocks;
+    ar["checkpoint/response/partial_count"] << response_partial_count;
+    ar["checkpoint/response/offsite_sum"] << response_offsite_sum;
+    ar["checkpoint/response/density_sum"] << response_density_sum;
+    ar["checkpoint/response/w2sum"] << response_w2sum;
+    ar["checkpoint/response/chi_s"] << response_chi_s;
+    ar["checkpoint/response/w2"] << response_w2;
+    ar["checkpoint/response/density"] << response_density;
+    ar["checkpoint/response/end_sweep"] << response_end_sweep;
+    ar["checkpoint/response/sweep_count"] << response_sweep_count;
+  }
 #ifdef UNISYS
   ar["checkpoint/configuration/hist_densmat"] << hist_densmat;
 #ifdef MATSUBARA_MEAS
@@ -149,6 +165,71 @@ void worm::load(alps::hdf5::archive & ar) {
   ar["checkpoint/configuration/nrvertex"] >> nrvertex;
   ar["checkpoint/configuration/nr_of_particles"] >> number_of_particles;
   ar["checkpoint/configuration/state"] >> state;
+
+  // Old checkpoints have neither this group nor these parameter keys. Their
+  // default remains disabled; an explicit parameter migration can enable a
+  // fresh response record without borrowing any old density-matrix hits.
+  const size_t restored_interval = parameters.exists("Nresponse_measure")
+      ? parameters["Nresponse_measure"].as<size_t>() : 0;
+  const size_t restored_limit = parameters.exists("Nresponse_max_blocks")
+      ? parameters["Nresponse_max_blocks"].as<size_t>() : 1000000;
+  if (restored_interval != Nresponse_measure || restored_limit != Nresponse_max_blocks)
+    throw std::runtime_error("Response parameters changed between construction and checkpoint load.");
+  clear_response_history();
+  initialize_response_measurements();
+  if (ar.is_group("checkpoint/response")) {
+    if (Nresponse_measure == 0)
+      throw std::runtime_error("Checkpoint contains response history but Nresponse_measure is disabled; refusing to discard it silently.");
+    int schema_version = 0;
+    size_t stored_interval = 0;
+    ar["checkpoint/response/schema_version"] >> schema_version;
+    ar["checkpoint/response/interval"] >> stored_interval;
+    if (schema_version != 1 || stored_interval != Nresponse_measure)
+      throw std::runtime_error("Unsupported response schema or changed response interval; use an explicit statistics migration.");
+    ar["checkpoint/response/partial_count"] >> response_partial_count;
+    ar["checkpoint/response/offsite_sum"] >> response_offsite_sum;
+    ar["checkpoint/response/density_sum"] >> response_density_sum;
+    ar["checkpoint/response/w2sum"] >> response_w2sum;
+    ar["checkpoint/response/chi_s"] >> response_chi_s;
+    ar["checkpoint/response/w2"] >> response_w2;
+    ar["checkpoint/response/density"] >> response_density;
+    ar["checkpoint/response/end_sweep"] >> response_end_sweep;
+    ar["checkpoint/response/sweep_count"] >> response_sweep_count;
+    const size_t blocks = response_chi_s.size();
+    if (blocks > Nresponse_max_blocks || response_w2.size() != blocks ||
+        response_density.size() != blocks || response_end_sweep.size() != blocks ||
+        response_sweep_count.size() != blocks || response_partial_count >= Nresponse_measure ||
+        !std::isfinite(response_offsite_sum) || response_offsite_sum < 0. ||
+        !std::isfinite(response_density_sum) || response_density_sum < 0. ||
+        !std::isfinite(response_w2sum) || response_w2sum < 0.)
+      throw std::runtime_error("Invalid response checkpoint history or partial block.");
+    for (size_t b = 0; b < blocks; ++b) {
+      if (!std::isfinite(response_chi_s[b]) || !std::isfinite(response_w2[b]) ||
+          !std::isfinite(response_density[b]) || response_chi_s[b] < 0. ||
+          response_w2[b] < 0. || response_density[b] < 0. ||
+          response_sweep_count[b] != Nresponse_measure || response_end_sweep[b] > sweeps ||
+          (b > 0 && response_end_sweep[b] <= response_end_sweep[b - 1]))
+        throw std::runtime_error("Invalid ordered response block in checkpoint.");
+    }
+    if (measurements["Superfluid_susceptibility"].count() != blocks ||
+        measurements["Winding_number_squared_sum"].count() != blocks)
+      throw std::runtime_error("Response accumulator counts disagree with the saved block history.");
+    if (response_partial_count == 0 &&
+        (response_offsite_sum != 0. || response_density_sum != 0. || response_w2sum != 0.))
+      throw std::runtime_error("Empty response partial block contains nonzero sums.");
+  }
+  else if (Nresponse_measure > 0) {
+    if (measurements["Superfluid_susceptibility"].count() != 0 ||
+        measurements["Winding_number_squared_sum"].count() != 0)
+      throw std::runtime_error("Response accumulators exist without their checkpoint history.");
+    std::cout << "# No response history in legacy checkpoint; starting a new empty response record.\n";
+  }
+  else if ((measurements.has("Superfluid_susceptibility") &&
+            measurements["Superfluid_susceptibility"].count() != 0) ||
+           (measurements.has("Winding_number_squared_sum") &&
+            measurements["Winding_number_squared_sum"].count() != 0)) {
+    throw std::runtime_error("Disabled response measurements have stored samples without history.");
+  }
 #ifdef UNISYS
   ar["checkpoint/configuration/hist_densmat"] >> hist_densmat;
 #ifdef MATSUBARA_MEAS

@@ -1,0 +1,81 @@
+{
+  "point": "l64t070",
+  "ranks": 8,
+  "interval": 10,
+  "Nmeasure": 1,
+  "Nmeasure2": 100,
+  "created_utc": "2026-10-25T07:22:31.027518+00:00",
+  "sources": [
+    {
+      "rank": 0,
+      "source": "results\\cleanRbRDM\\l64t070\\rdm.clone.h5",
+      "bytes": 21828390,
+      "mtime_ns": 1792512006258957000
+    },
+    {
+      "rank": 1,
+      "source": "results\\cleanRbRDM\\l64t070\\rdm.clone.h5.1",
+      "bytes": 13829426,
+      "mtime_ns": 1792512006196447200
+    },
+    {
+      "rank": 2,
+      "source": "results\\cleanRbRDM\\l64t070\\rdm.clone.h5.2",
+      "bytes": 30997102,
+      "mtime_ns": 1792512006227691100
+    },
+    {
+      "rank": 3,
+      "source": "results\\cleanRbRDM\\l64t070\\rdm.clone.h5.3",
+      "bytes": 22999758,
+      "mtime_ns": 1792512006212070700
+    },
+    {
+      "rank": 4,
+      "source": "results\\cleanRbRDM\\l64t070\\rdm.clone.h5.4",
+      "bytes": 23589954,
+      "mtime_ns": 1792512006212070700
+    },
+    {
+      "rank": 5,
+      "source": "results\\cleanRbRDM\\l64t070\\rdm.clone.h5.5",
+      "bytes": 21230114,
+      "mtime_ns": 1792512006227691100
+    },
+    {
+      "rank": 6,
+      "source": "results\\cleanRbRDM\\l64t070\\rdm.clone.h5.6",
+      "bytes": 30400374,
+      "mtime_ns": 1792512006165206900
+    },
+    {
+      "rank": 7,
+      "source": "results\\cleanRbRDM\\l64t070\\rdm.clone.h5.7",
+      "bytes": 22416542,
+      "mtime_ns": 1792512006212070700
+    }
+  ],
+  "independent_new_seeds": false,
+  "provenance": "Warm continuation of copied rank states and RNG streams; source archives unchanged.",
+  "runs": [
+    {
+      "number": 1,
+      "started_utc": "2026-10-25T18:30:22.365796+00:00",
+      "completed_utc": "2026-10-25T18:40:37.393345+00:00",
+      "runtime_seconds": 600,
+      "output": "run01.h5",
+      "executable_sha256": "6b4e5af66e464c66203f46d00a74ae769259d84ccb2de516a079842eac5904f0",
+      "rank_blocks": [
+        1131,
+        1217,
+        1097,
+        1233,
+        1083,
+        1177,
+        1159,
+        1202
+      ]
+    }
+  ],
+  "executable": "build-repro\\worm-square-response\\qmc_worm_mpi.exe"
+}

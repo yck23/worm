@@ -6,7 +6,7 @@ If you are learning how to launch the program, start with [BASIC_RUN_GUIDE.md](B
 
 Guide status: independent audit completed on 2 October 2026 for commit bd0a6d9, compared with the preceding PR merge fb73840. The implementation changes described below are committed; this guide update does not change the simulation code. The audit supports the number, energy and winding workflow, with the convergence and on-site correlation-estimator limitations stated below. To read the formatted version in VS Code, press Ctrl+Shift+V. Backticks and dollar signs visible in a plain-text editor are Markdown/LaTeX formatting marks, not characters to type unless they occur inside a command block.
 
-Update, 24 October 2026: [Section 11.6](#116-equal-time-susceptibility-and-reliable-error-bars) documents the equal-time susceptibility, the measurement settings and simulator additions needed for reliable errors, and the committed L = 32, 64, 128 analysis. These newer results are a separate clean-system scan with a different density and cutoff from the audited reference below. The scalar susceptibility accumulator and time-series export described there are proposed work, not implemented features.
+Update, 24 October 2026: [Section 11.6](#116-equal-time-susceptibility-and-reliable-error-bars) documents the equal-time susceptibility, the measurement settings and simulator additions needed for reliable errors, and the committed L = 32, 64, 128 analysis. These newer results are a separate clean-system scan with a different density and cutoff from the audited reference below. Update, 25 October 2026: the optional joint scalar estimator and checkpoint histories are now implemented. The [response notebook](results/response_measurements/response_measurements.ipynb) contains a separate, audited final-production dataset with rank-based errors; see the collection and validation notes in that folder.
 
 The immediate target is a homogeneous, periodic, two-dimensional Bose gas represented by a 64 x 64 Bose-Hubbard lattice. The supplied parameter set approximates the Rb-87 regime. It is a controlled lattice calculation of BKT-like physics.
 
@@ -1028,7 +1028,7 @@ The current audit verifies the build, ensemble, Hamiltonian, energy estimator, w
 
 ### 11.6 Equal-time susceptibility and reliable error bars
 
-This section accompanies the committed [comparison notebook](results/cleanRbRDM/density_matrix_comparison.ipynb) and [result inventory](results/README.md). The notebook already computes susceptibility means and plots. Autocorrelation and blocking analyses require scalar histories and convergence work in the simulation; editing an INI alone does not add the missing history. Independent equilibrated replica summaries can also provide errors, but the existing rank summaries support only the coarse estimate described below.
+This section accompanies the committed [comparison notebook](results/cleanRbRDM/density_matrix_comparison.ipynb) and [result inventory](results/README.md). The notebook already computes susceptibility means and plots. The newer [response measurement folder](results/response_measurements/README.md) and [notebook](results/response_measurements/response_measurements.ipynb) provide compact rank records, final-production means with statistical errors, and supplemental scalar histories. Temporal blocking requires the new source build with response recording enabled. Independent-rank errors remain conditional on equilibration and distinct rank streams.
 
 #### Which physical quantity is being measured?
 
@@ -1075,12 +1075,14 @@ For a canonical production this is simply `G.sum() - G[0,0] + N/L**2`, using the
 
 #### What the measurement parameters actually control
 
-The following are existing parameters, not new susceptibility settings:
+The following controls have different roles; shorter recording intervals do not create independent samples:
 
 | Parameter/control | Meaning for collection | Practical choice or check |
 |---|---|---|
 | `Nmeasure` | Interval in eligible closed-to-closed updates for number, energy and winding measurements | Keep 1 for the pilot and record these diagnostics alongside susceptibility. It does not control the density-matrix histogram flush. |
 | `Nmeasure2` | Number of eligible updates accumulated into one density-matrix vector before division by the interval and insertion into ALPSCore | The old scan uses 10000; the recollection uses 1000. Benchmark 100 or 1000 for a new pilot if full-array measurement cost permits. These are starting choices, not guarantees of independent measurements. |
+| `Nresponse_measure` | New optional number of eligible closed update calls per joint scalar interval; 0 disables it | Use 10 for the pilot. It accumulates off-site hits throughout the interval and measures density and winding on every eligible closed update, independently of `Nmeasure` and `Nmeasure2`. |
+| `Nresponse_max_blocks` | Maximum retained complete scalar intervals per rank | Default 1000000; the program fails explicitly at the limit. Archive a window and deliberately reset, or increase the checkpoint limit. Do not silently discard history. |
 | `thermalization` | Initial per-rank sweep threshold before statistics are collected | Determine adequate burn-in from independent starts and late stability. Crossing the configured threshold alone is insufficient. |
 | `sweeps` | Production progress/stop target; MPI completion aggregates progress across ranks | Do not read this as the sample count of every rank. Verify actual per-rank eligible updates and histogram counts; scheduler checks can overshoot. |
 | `runtimelimit` | Wall-clock cap for the invocation | A 900-second block does not guarantee any fixed number of samples or decorrelation times. Prefer comparable production sweep counts per rank and retain actual counts. |
@@ -1091,7 +1093,7 @@ The following are existing parameters, not new susceptibility settings:
 
 For a fresh statistics window with S_r eligible update calls on rank r, the complete density-histogram count is floor(S_r/Nmeasure2). MPI merges the sums of those counts; a partial histogram at the end of a window is not yet a completed sample. Checkpoints preserve that partial histogram and its counter; a deliberate statistics reset discards it. Changing the flush interval therefore changes how much partial data can be discarded at boundaries.
 
-For example, 4500 eligible updates and Nmeasure2 = 1000 give only four complete scalar/vector interval estimates on that rank. Nmeasure2 = 100 gives 45 estimates covering roughly the same Monte Carlo history, with finer time resolution and more measurement overhead. It does not multiply the amount of independent physical information by ten. An accepted insertion produces a variable-length worm excursion; a rejected insertion leaves the update closed. Neither type of update is one sweep of every site or a unit of physical time.
+For example, 4500 eligible updates and Nmeasure2 = 1000 give only four complete density-matrix histogram estimates on that rank. Nmeasure2 = 100 gives 45 estimates covering roughly the same Monte Carlo history, with finer time resolution and more measurement overhead. It does not multiply the amount of independent physical information by ten. An accepted insertion produces a variable-length worm excursion; a rejected insertion leaves the update closed. Neither type of update is one sweep of every site or a unit of physical time.
 
 The following fragment describes the existing recollection cadence; it is not a convergence-certified production recipe:
 
@@ -1104,21 +1106,26 @@ runtimelimit = 900
 
 Set the physics, cutoff, burn-in and production target separately. Continuing a checkpoint restores its saved parameters: editing a nearby INI does not change them. The recollection controller explicitly edits its own copied checkpoint parameters and resets its statistics; it is not a general instruction to mutate existing production archives. Start a new run for changed physics, and use documented restore handling for any measurement-cadence change.
 
-#### Simulator work needed to measure the error of the sum
+#### Implemented scalar measurements and restart behavior
 
-The current source has a vector `LogBinningAccumulator` for `Density_Matrix`, but no dedicated equal-time susceptibility accumulator or ordered scalar history. Marginal errors for each displacement cannot reconstruct the error of their sum without spatial covariance.
+The source now optionally records `Superfluid_susceptibility` and `Winding_number_squared_sum` as scalar log-binning accumulators, and saves their ordered, paired interval values in each rank checkpoint. Enable them with `Nresponse_measure > 0` and rebuild the simulator. Existing inputs and legacy checkpoints default to disabled. This implementation supports the uniform (`UNISYS`), periodic, single-basis Bose-Hubbard model.
 
-The minimal implementation is to form one scalar from each complete histogram before resetting it:
+For each complete interval of M eligible closed update calls, it records
 
 $$
-X_b=\frac{N}{N_s}+\sum_{\mathbf r\ne0}G_b(\mathbf r).
+X_b=\frac{1}{M}\sum_{\text{off-site equal-time hits in }b}\frac{1}{C_{\rm worm}}
+    +\frac{1}{M}\sum_{s\in b}\frac{N(s)}{N_{\rm sites}},
+\qquad
+Y_b=\frac{1}{M}\sum_{s\in b}(W_{x,s}^2+W_{y,s}^2).
 $$
 
-Register a scalar log-binning accumulator and insert X_b at the same point as the vector. Sum first, then estimate the variance: this automatically includes all spatial covariance terms. In a grand-canonical implementation, accumulate N over the same closed-update interval and use its interval mean in X_b. Then the scalar fluctuations also include the covariance between density and coherence.
+Here the particle count in the second sum is the count of that closed configuration; for this fixed-N scan it is constant. The scalar susceptibility sums **all displacements before estimating its variance**, includes zero-hit intervals, and uses the operator identity for the on-site term. `Y_b` includes covariance between winding directions. Both values cover the same update interval. Neither value receives another beta, volume, or radial-degeneracy factor. The scalar cadence is independent of the expensive density-matrix flush cadence.
 
-Also save the ordered X_b values, rank ID, sweep/interval index, and interval length. A scalar series is inexpensive and supports later autocorrelation, blocking and resampling checks. Keep separate histories for separate ranks. For a more efficient follow-up implementation, accumulate off-site equal-time worm contributions into a scalar counter and flush it more frequently than the expensive spatial arrays. Include intervals with zero worm contributions and normalize by the actual closed-update count; selecting only successful hits changes the estimator. Any independent scalar interval would need a new, explicitly implemented parameter. No such parameter exists in this commit.
+The checkpoint group `simulation/realizations/0/clones/0/checkpoint/response` contains `chi_s`, `w2`, `density`, `end_sweep`, `sweep_count`, the interval, schema version, and the incomplete interval's counters. Complete values enter the scalar accumulators; an incomplete interval is carried through a normal restart. `--reset-statistics` clears both complete and partial response data while retaining the state and RNG. Changing the recording interval while retaining history is rejected. MPI output merges the scalar accumulators; analysis must retain each rank's checkpoint history separately.
 
-The implementation must cover accumulator registration, thermalization/reset, checkpoint save/load of partial counters and histories, and MPI merging while retaining rank identity. Rebuild after this source change. Before production, check that scalar means agree with the corrected vector sums on identical measurement windows, that a resumed run matches an uninterrupted one, and that explicit resets remove previous statistics without changing the configuration. Repeat a small exact-diagonalization/identity benchmark and a C_worm invariance check. Saving a scalar does not repair a biased estimator by itself.
+`scripts/collect_response_measurements.py` creates isolated copies of the chosen warm checkpoints, explicitly sets the response parameters, resets statistics once, then continues each rank without resetting. It exports compact `history.npz` arrays and a manifest. It does not change the source archives. Repeated invocations extend the same cumulative histories; they are not independent replicas or separate samples to pool. The new executable is built in `build-repro/worm-square-response`, leaving the packaged executable unchanged. See the response folder for the exact build and run commands and validation results.
+
+Verification compares the scalar susceptibility with the corrected full-vector sum on aligned windows, the scalar winding with the sum of winding-vector means, uninterrupted versus checkpoint-resumed histories, resets, and legacy migration. These checks verify measurement bookkeeping. They do not replace physical convergence checks for the off-site estimator, occupation cutoff, or initial state.
 
 #### Collecting and judging a usable error bar
 
@@ -1129,7 +1136,7 @@ The implementation must cover accumulator registration, thermalization/reset, ch
 5. Compare rank means, early/late windows and independent-seed groups. Combine independent rank means with weights w_r proportional to their measured sample counts and normalized so their sum is one; if their per-rank errors are valid, the combined variance is sum(w_r squared times SE_r squared). For equal sampling lengths and settings the weights are equal. Keep both the individual diagnostics and the combined estimate.
 6. Quote statistical error separately from occupation-cutoff, lattice-spacing, fit-window and finite-size systematics. No statistical resampling diagnoses a common equilibration bias shared by all chains.
 
-For planning, if a blocking plateau appears at k recorded intervals and at least B long blocks are wanted per chain, that chain needs at least B*k*Nmeasure2 eligible update calls after burn-in when using the minimal histogram-cadence implementation. For example, k = 16, B = 50 and Nmeasure2 = 1000 require 800000 eligible updates per chain. This arithmetic illustrates the cost; k must be measured, not assumed. Shorter output intervals alone cannot remove the autocorrelation requirement.
+For planning, if a blocking plateau appears at k recorded intervals and at least B long blocks are wanted per chain, that chain needs at least B*k*Nresponse_measure eligible update calls after burn-in for the scalar recorder. For example, k = 16, B = 50 and Nresponse_measure = 10 require 8000 eligible updates per chain. If instead analyzing histogram-cadence estimates with Nmeasure2 = 1000, the same number of recorded intervals requires 800000 eligible updates. This arithmetic illustrates the cost; k must be measured, not assumed. Shorter output intervals alone cannot remove the autocorrelation requirement.
 
 #### What can be recovered from the existing results?
 
@@ -1137,14 +1144,28 @@ The committed scan has L = 32, 64, 128, nine beta values and three production wi
 
 Use the eight new `cleanRbRDM` points in preference to their older counterparts. The notebook already makes that selection; several superseded old arrays are missing, stale or lack finite errors. The new outputs have finite marginal errors, but only one stored error-bin level. At L = 128, beta = 0.70 the three new windows contain 33, 34 and 33 histograms merged over eight ranks, with only 4-5 per rank per window.
 
-Those eight recollected points retain `prod*.rank_means.npz`. An exploratory uncertainty can be obtained by summing each rank's full off-site matrix, adding exact density, and count-weighting its three continuation windows into one rank estimate. Apply a delete-one-rank jackknife to the overall count-weighted mean, recomputing the weights each time. With R ranks and leave-one-rank-out estimates chi_(-r), its variance estimate is
+The response dataset recovers **520 rank records across all 27 points** from the local checkpoint families: 24 ranks at 19 original points and eight ranks at eight recollected points. Each family was checked against its selected `prod03.h5`: the full density-matrix and winding-vector means and counts reproduce that output, and physical parameters and configured thermalization thresholds agree. These compact records are sufficient to reproduce the response notebook without the large restart files.
+
+Use each rank's off-site sum plus exact density for susceptibility, and sum its two winding components before resampling. Weight susceptibility by that rank's completed density-histogram count, and winding by its completed winding count. For each observable, apply a delete-one-rank jackknife, recomputing the weighted mean after each deletion. With R ranks and leave-one-rank-out estimates theta_(-r),
 
 $$
 \mathrm{SE}_{\rm jack}^2=\frac{R-1}{R}\sum_r
-\left[\chi_{(-r)}-\frac{1}{R}\sum_s\chi_{(-s)}\right]^2.
+\left[\theta_{(-r)}-\frac{1}{R}\sum_s\theta_{(-s)}\right]^2.
 $$
 
-Treat the eight ranks as the units, not the 24 rank/window combinations or the individual spatial bins. This preserves spatial covariance and dependence between continuation windows, conditional on independently sampled, equilibrated rank histories. Eight units give only a coarse uncertainty estimate; their common bias is not measured. The other 19 points have no such saved rank summaries in the committed selection. The current notebook therefore shows production dots and weighted means without susceptibility error bars. The raw scalar time histories needed for a blocking plateau cannot be reconstructed from the saved marginal errors.
+The notebook reports **one-standard-error bars**, not 95% confidence intervals. Whole ranks preserve within-chain correlation and spatial/directional covariance in the mean; they do not measure a common equilibration bias. Eight ranks give a coarse estimate of uncertainty. Some older checkpoints have only one or two complete density intervals per rank, so temporal blocking cannot be inferred for those points. The data tables label this explicitly.
+
+The clean baseline uses **final production only**. The older comparison notebook pools three production means; attaching final-production errors to that pooled central value would be inconsistent. Its user edits and pooled plots are preserved. Supplemental histories continue selected source lineages and are shown separately. Neither different windows nor their cumulative output files are treated as independent chains.
+
+The practical precision target is 5% relative SE for susceptibility and for winding away from zero, with an absolute winding SE of 0.02 near zero. This is a planning choice, not a physical confidence criterion. Under stationary sampling, a first runtime estimate is `new_length / old_length ~= (current_SE / target_SE)**2`. Check the slower of the two observables, retain many long blocks, and repeat diagnostics after extension. A precision flag alone is not evidence of equilibrium. The baseline nominal susceptibility SEs are below 5%, but the separate drift and temporal checks remain necessary.
+
+#### Supplemental response runs and current limits
+
+Four 600-second, eight-rank warm continuations at L128 beta = .28, .30, .45 and L64 beta = .70 produced 147012 completed ten-update scalar intervals. Their checkpoint histories reproduce the merged scalar output counts and means. The [response notebook](results/response_measurements/response_measurements.ipynb) shows the raw-rank traces, temporal blocking curves and baseline comparison; the [folder README](results/response_measurements/README.md) records exact settings, counts and commands.
+
+These pilots remain separate from the final-production baseline because they continue the same rank lineages. L128 beta = .30 has a winding blocking SE of .02339, about 6.0%, larger than its rank-jackknife SE .01917: it needs more sampling for the 5% target. L128 beta = .45 has no demonstrated stable blocking plateau and a winding rank SE of 5.12%. The other two pilots pass preliminary numerical screens, not independent-start or cutoff-convergence certification. The analysis requires both rank and usable blocked SEs to meet the target and retains their separate values.
+
+Nine small-system integration test groups passed, including scalar/vector identities, bitwise checkpoint continuation, reset and legacy behavior. Six collection checks passed, including empty histories and stale-checkpoint rejection. The four MPI families were verified against their merged outputs. These are bookkeeping checks, not a new exact-diagonalization or C_worm-invariance physics benchmark.
 
 #### Using susceptibility for the BKT analysis
 

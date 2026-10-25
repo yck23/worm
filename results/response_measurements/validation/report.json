@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "executable": "build-repro/worm-square-response/qmc_worm.exe",
+  "executable_sha256": "9457655a9ebe59435fd7908029df01d2f6fb51309dfaead90ca9308b76db314d",
+  "started_utc": "2026-10-25T18:19:16.060808+00:00",
+  "checks": [
+    {
+      "name": "aligned_scalar_vector_identity",
+      "passed": true,
+      "blocks": 200,
+      "chi_s": 9.691694444444414,
+      "w2sum": 0.7995,
+      "chi_difference": 3.019806626980426e-14,
+      "w2_difference": 1.1102230246251565e-16
+    },
+    {
+      "name": "default_off_preserves_trajectory",
+      "passed": true
+    },
+    {
+      "name": "legacy_checkpoint_without_new_parameters",
+      "passed": true
+    },
+    {
+      "name": "explicit_legacy_activation",
+      "passed": true,
+      "blocks": 2,
+      "partial_sweeps": 5
+    },
+    {
+      "name": "deterministic_partial_block_restart",
+      "passed": true,
+      "initial_partial_sweeps": 25,
+      "final_blocks": 32,
+      "final_partial_sweeps": 11,
+      "bitwise_identical": true
+    },
+    {
+      "name": "partial_winding_density_accounting",
+      "passed": true,
+      "represented_sweeps": 1003
+    },
+    {
+      "name": "reset_discards_old_history_and_partial_sums",
+      "passed": true,
+      "blocks": 3,
+      "partial_sweeps": 27
+    },
+    {
+      "name": "burnin_empty_history_save_restore",
+      "passed": true
+    },
+    {
+      "name": "invalid_response_configuration_guards",
+      "passed": true,
+      "cases": 4
+    }
+  ],
+  "status": "passed",
+  "elapsed_seconds": 10.844,
+  "finished_utc": "2026-10-25T18:19:26.904331+00:00",
+  "test_script": "scripts/test_response_measurements.py",
+  "scope": "Canonical serial 3x3 Bose-Hubbard bookkeeping regressions; not a physical convergence assessment.",
+  "raw_run_directory": "results/response_measurements/validation/run_20261025T181916_020192Z"
+}

@@ -181,6 +181,10 @@ public :
   boost::multi_array<double,2> serialize_op_string() const;
 
   void measure_density_matrix();
+  void measure_response();
+  void clear_response_history();
+  void reset_response_statistics();
+  void initialize_response_measurements();
   void update_hist();
 #ifdef MATSUBARA_MEAS
   void measure_Gktau();
@@ -224,6 +228,17 @@ private :
   unsigned long Ntest;
   unsigned long Nsave;
   size_t Nmeasure, Nmeasure2;
+  size_t Nresponse_measure, Nresponse_max_blocks;
+
+  // Optional joint, ordered block records. All sums cover the same eligible
+  // closed sweeps; off-site hits are accumulated during their open excursions.
+  size_t response_partial_count = 0;
+  double response_offsite_sum = 0.;
+  double response_density_sum = 0.;
+  double response_w2sum = 0.;
+  std::vector<double> response_chi_s, response_w2, response_density;
+  std::vector<unsigned long> response_end_sweep;
+  std::vector<size_t> response_sweep_count;
   
   // internal variables
   unsigned long long nrvertex;

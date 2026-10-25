@@ -1,0 +1,12 @@
+{
+  "points": 27,
+  "ranks": 520,
+  "errors": [],
+  "method": "Final production only: per-rank chi=sum G-G[0]+N/L^2; W2=Wx2+Wy2. Separate histogram and diagonal-sample count weights. Delete-one-rank jackknife sqrt((R-1)/R sum((theta_minus_rank-mean_loo)^2)).",
+  "limitations": [
+    "Requires independent equilibrated rank streams. Configured thermalization threshold alone is not proof of equilibration.",
+    "Only final production rank data: these errors must not be attached to the pooled three-production mean.",
+    "No scalar time series or blocking plateau available.",
+    "Only parameters, measurements and sweep count read; no configuration arrays."
+  ]
+}

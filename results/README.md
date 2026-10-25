@@ -1,5 +1,7 @@
 # Committed clean-system results
 
+For the clean **winding-sum and scaled-susceptibility dataset with rank error bars**, start with the new [response notebook](response_measurements/response_measurements.ipynb) and [collection notes](response_measurements/README.md). It includes 27 final-production points, 520 rank records and four supplemental scalar-history pilots. Its separate [checksum manifest](response_measurements/FILES_SHA256.csv) covers that package.
+
 Start with [the main comparison notebook](cleanRbRDM/density_matrix_comparison.ipynb)
 and [its collection and analysis notes](cleanRbRDM/README.md). The notebook contains
 ordinary analysis and plotting cells, with saved outputs. Its final section evaluates
@@ -25,8 +27,8 @@ they do not assert converged uncertainties or a precision BKT temperature.
   remain local archives.
 - [analysis_inputs.csv](cleanRbRDM/analysis_inputs.csv), with portable relative paths,
   parameters and checksums for the selected HDF5 files, and
-  [FILES_SHA256.csv](FILES_SHA256.csv), with sizes and hashes of all published
-  result files except the checksum manifest itself.
+  [FILES_SHA256.csv](FILES_SHA256.csv), with sizes and hashes of the original published
+  result snapshot except the checksum manifest itself. The response package has its own manifest.
 
 The matched scan has t = 1, U = 0.152, V = 0, nmax = 5 and density
 N/L^2 = 1.8310546875. N is 1875, 7500 and 30000 for the three sizes. This is a

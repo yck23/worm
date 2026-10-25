@@ -1,0 +1,14 @@
+{
+  "status": "passed",
+  "simulations_launched": 0,
+  "test_script": "scripts/test_response_collection.py",
+  "collector_sha256": "47d8fe2c590d4f1a4b2afbb93616c2f15ed8847568df07f12c9c1cc43bc21b53",
+  "checks": [
+    "mixed_populated_and_null_empty_rank_passes",
+    "stale_or_inconsistent_merged_count_rejected_without_overwriting_export",
+    "inconsistent_merged_mean_rejected",
+    "missing_nonempty_rank_accumulator_rejected",
+    "all_empty_histories_and_omitted_result_groups_pass",
+    "mpi_and_serial_checkpoint_save_warnings_rejected"
+  ]
+}

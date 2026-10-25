@@ -44,6 +44,8 @@ void worm::define_parameters(parameters_type & parameters) {
         .define<unsigned long>("Nsave",         100000,   "save configuration after this number of updates"   )
         .define<parameter_size_type>("Nmeasure",             1,        "measure O(1) observables after this number of updates"   )
         .define<parameter_size_type>("Nmeasure2",            1,        "measure O(N) observables after this number of updates"   )
+        .define<parameter_size_type>("Nresponse_measure", 0, "closed sweeps per joint equal-time susceptibility/winding block; 0 disables")
+        .define<parameter_size_type>("Nresponse_max_blocks", 1000000, "maximum retained response blocks per rank; reaching the limit fails explicitly")
         .define<double>("p_insertworm",         1.0,      "update probability to insert worm in diagonal configuration")
         .define<double>("p_moveworm",           0.3,      "update probability to move worm head around")
         .define<double>("p_insertkink",         0.2,      "update probability to insert kink at position of worm head")
@@ -101,6 +103,8 @@ worm::worm(parameters_type const & parameters, std::size_t seed_offset) : alps::
     , Nsave(parameters["Nsave"])
     , Nmeasure(parameters["Nmeasure"])
     , Nmeasure2(parameters["Nmeasure2"])
+    , Nresponse_measure(parameters.exists("Nresponse_measure") ? parameters["Nresponse_measure"].as<parameter_size_type>() : 0)
+    , Nresponse_max_blocks(parameters.exists("Nresponse_max_blocks") ? parameters["Nresponse_max_blocks"].as<parameter_size_type>() : 1000000)
     , update_statistics(boost::extents[statistics_tag::statistics_count][update_tag::update_count])
     , nbtime(zcmax+1)
     , dtime(zcmax+1)
@@ -199,6 +203,20 @@ worm::worm(parameters_type const & parameters, std::size_t seed_offset) : alps::
     throw std::runtime_error("canonical value should not be larger than Nsites * nmax.");
 
 
+  if (Nresponse_measure > 0) {
+#ifndef UNISYS
+    throw std::runtime_error("Nresponse_measure requires a UNISYS build.");
+#else
+    if (ModelClassifierName != "BoseHubbard" || LATTICE::n_basis != 1 ||
+        !parameters["pbcx"].as<bool>() ||
+        (LATTICE::dim > 1 && !parameters["pbcy"].as<bool>()) ||
+        (LATTICE::dim > 2 && !parameters["pbcz"].as<bool>()))
+      throw std::runtime_error("Nresponse_measure requires BoseHubbard on a periodic, single-basis lattice.");
+    if (Nresponse_max_blocks == 0)
+      throw std::runtime_error("Nresponse_max_blocks must be positive when response measurements are enabled.");
+#endif
+  }
+
   measurements
     << alps::accumulators::LogBinningAccumulator<double >("Total_Energy")
     << alps::accumulators::LogBinningAccumulator<double >("Kinetic_Energy")
@@ -218,6 +236,7 @@ worm::worm(parameters_type const & parameters, std::size_t seed_offset) : alps::
 #endif
 #endif
   ;
+  initialize_response_measurements();
 #ifdef UNISYS
   hist_densmat.resize(Nsites);
   for (size_t i=0; i < hist_densmat.size(); i++) hist_densmat[i] = 0;
@@ -447,6 +466,7 @@ void worm::measure() {
   ++sweeps;
   if (sweeps < thermalization_sweeps) return;
   if (sweeps == thermalization_sweeps) {
+    if (Nresponse_measure > 0) reset_response_statistics();
 #ifdef UNISYS
     for (size_t i=0; i < hist_densmat.size(); i++) hist_densmat[i] = 0;
 #ifdef MATSUBARA_MEAS
@@ -457,6 +477,10 @@ void worm::measure() {
 #endif
     return;
   }
+
+  // update() has just returned to the closed sector. Include every eligible
+  // sweep, even when no off-site equal-time hit occurred in that excursion.
+  if (Nresponse_measure > 0) measure_response();
 
   counter[counter_tag::WRITE]++;
   counter[counter_tag::MEASURE]++;
@@ -517,6 +541,7 @@ void worm::force_reset_statistics() {
   reset(measurements["Number_of_particles"]);
   reset(measurements["Number_of_particles_squared"]);
   reset(measurements["Density_Distribution"]);
+  if (Nresponse_measure > 0) reset_response_statistics();
 #ifdef UNISYS
   reset(measurements["Density_Matrix"]);
   //reset(measurements["Density_Matrix2"]);
@@ -679,6 +704,61 @@ void worm::measure_corrfun() {
 }
 
 
+void worm::initialize_response_measurements() {
+  if (Nresponse_measure == 0) return;
+  if (!measurements.has("Superfluid_susceptibility"))
+    measurements << alps::accumulators::LogBinningAccumulator<double>("Superfluid_susceptibility");
+  if (!measurements.has("Winding_number_squared_sum"))
+    measurements << alps::accumulators::LogBinningAccumulator<double>("Winding_number_squared_sum");
+}
+
+void worm::clear_response_history() {
+  response_partial_count = 0;
+  response_offsite_sum = response_density_sum = response_w2sum = 0.;
+  response_chi_s.clear();
+  response_w2.clear();
+  response_density.clear();
+  response_end_sweep.clear();
+  response_sweep_count.clear();
+}
+
+void worm::reset_response_statistics() {
+  clear_response_history();
+  if (measurements.has("Superfluid_susceptibility"))
+    reset(measurements["Superfluid_susceptibility"]);
+  if (measurements.has("Winding_number_squared_sum"))
+    reset(measurements["Winding_number_squared_sum"]);
+}
+
+void worm::measure_response() {
+  if (!worm_diag)
+    throw std::runtime_error("Response block measurement requires a closed configuration.");
+  if (response_chi_s.size() >= Nresponse_max_blocks)
+    throw std::runtime_error("Response history limit reached; archive/reset production statistics or explicitly increase Nresponse_max_blocks in the checkpoint parameters.");
+
+  ++response_partial_count;
+  response_density_sum += static_cast<double>(number_of_particles) / Nsites;
+  for (size_t d = 0; d < latt_dim; ++d) {
+    const double winding = static_cast<double>(mWinding[d]) / MyLatt->get_Ls(d);
+    response_w2sum += winding * winding;
+  }
+  if (response_partial_count < Nresponse_measure) return;
+
+  const double norm = 1. / response_partial_count;
+  const double density = response_density_sum * norm;
+  const double chi = response_offsite_sum * norm + density;
+  const double w2 = response_w2sum * norm;
+  measurements["Superfluid_susceptibility"] << chi;
+  measurements["Winding_number_squared_sum"] << w2;
+  response_chi_s.push_back(chi);
+  response_w2.push_back(w2);
+  response_density.push_back(density);
+  response_end_sweep.push_back(sweeps);
+  response_sweep_count.push_back(response_partial_count);
+  response_partial_count = 0;
+  response_offsite_sum = response_density_sum = response_w2sum = 0.;
+}
+
 void worm::measure_density_matrix() {
 #ifdef UNISYS
   if (LATTICE::n_basis > 1) return;
@@ -688,6 +768,7 @@ void worm::measure_density_matrix() {
   size_t dd = MyLatt->relNumbering(worm_head_it->link(), worm_tail_it->link());
   if (dd) {
     hist_densmat[dd] += 1. / (C_worm);
+    if (Nresponse_measure > 0) response_offsite_sum += 1. / C_worm;
   }
   else {
     if (ModelClassifierName == "XXZ") {
