@@ -1,6 +1,6 @@
 # Winding and scaled susceptibility measurements
 
-Open [response_measurements.ipynb](response_measurements.ipynb). It contains plain analysis cells, saved tables, and five figures: the full 27-point scan, transition-region view, baseline/pilot comparison, rank traces, and temporal blocking curves. It needs NumPy, Matplotlib and IPython; it does not need the large restart files or pandas.
+Open [response_measurements.ipynb](response_measurements.ipynb). It contains direct analysis cells without custom functions, saved tables, and seven figures: the full 27-point scan, transition-region view, baseline/pilot comparison, rank traces, temporal blocking curves, all-point relative-error bars, and close-ups showing both rank and temporal errors for every continuation. All 70 reported SE values (54 baseline rank, eight continuation rank, eight continuation blocking) are visible as error bars and in numerical tables. [notebook_errorbars.csv](data/notebook_errorbars.csv) exports the same numbers; blank blocking fields mean no scalar time history for that baseline window. The notebook computes both error estimates directly and verifies them against the recorded summaries. It needs NumPy, Matplotlib and IPython; it does not need the large restart files or pandas.
 
 The [main guide, Section 11.6](../../COMPLETE_BKT_GUIDE.md#116-equal-time-susceptibility-and-reliable-error-bars) explains the physics, estimator, cadence, resampling and convergence requirements.
 
