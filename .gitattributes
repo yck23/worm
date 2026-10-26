@@ -3,3 +3,8 @@ results/response_measurements/** -text whitespace=blank-at-eol,blank-at-eof,spac
 results/README.md -text
 # Response-analysis source hashes are recorded in result provenance.
 scripts/*_response_*.py text eol=lf
+
+# Preserve the corrected main-notebook snapshot and its recorded uncertainty table.
+results/cleanRbRDM/density_matrix_comparison.ipynb -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+results/cleanRbRDM/README.md -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+results/cleanRbRDM/analysis/susceptibility_final_with_errors.csv -text

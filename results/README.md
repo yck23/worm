@@ -9,8 +9,9 @@ the equal-time susceptibility and its leading BKT size scaling.
 
 The measurement definitions and the additional simulation work required for reliable
 error bars are documented in [the main guide, Section 11.6](../COMPLETE_BKT_GUIDE.md#116-equal-time-susceptibility-and-reliable-error-bars).
-The current susceptibility plots show corrected means and production variation;
-they do not assert converged uncertainties or a precision BKT temperature.
+The susceptibility plots in both notebooks now show final-production means with
+matching whole-rank jackknife standard errors. Historical pooled-production CSVs
+remain separate. These errors do not certify equilibrium or a precision BKT temperature.
 
 ## Included inputs and results
 

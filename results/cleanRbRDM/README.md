@@ -248,3 +248,12 @@ that the exponential model passes an absolute goodness-of-fit test.
 Method references:
 https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.curve_fit.html
 https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.chi2.html
+
+
+## Susceptibility error bars in the main notebook
+
+The susceptibility section of `density_matrix_comparison.ipynb` now computes whole-rank jackknife errors directly and uses `errorbar` for raw susceptibility, scaled susceptibility and the size dependence. These plots use matched final-prod03 means and one-standard-error bars. A percentage-error plot shows all 27 susceptibility uncertainties even when the physical-scale bars are small.
+
+The calculation reads the compact rank summaries in `../response_measurements/data/baseline_rank_observables.csv`, sums off-site contributions inside each rank, adds exact density, and count-weights the rank means. No custom functions or analysis-module imports are used. The direct result is checked against the actual final-production density matrix at every point.
+
+`analysis/susceptibility_final_with_errors.csv` records the 27 plotted means and errors, including their L^(7/4) scaling. The older `susceptibility_summary.csv` remains the historical pooled-three-production table; it is not the central value of the new error-bar plots. All errors remain conditional on independent, equilibrated rank streams. The separate `../response_measurements/response_measurements.ipynb` includes winding, rank/temporal errors and the new continuation histories.

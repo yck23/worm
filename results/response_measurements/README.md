@@ -16,7 +16,7 @@ The baseline covers L = 32, 64, 128 (L² sites), beta = .28, .30, .32, .35, .39,
 
 Susceptibility is weighted by completed density-histogram counts; winding is weighted by its own diagonal measurement counts. Each delete-one-rank jackknife recomputes the weighted mean. Summing inside a rank preserves the covariance of spatial bins and winding directions. Whole ranks account for within-chain dependence without pretending individual intervals are independent. The validity still requires independently sampled, equilibrated rank streams. Eight ranks give a coarse uncertainty estimate; shared bias remains invisible.
 
-This baseline is **final production only**. The earlier comparison notebook pools three production windows. These errors must not be attached to its different central values. All 27 baseline chi errors are below 5%; 26 winding errors are below 5%. The remaining near-zero W2 point meets the absolute SE target .02. These are precision statements, not proof of equilibrium; all baseline rows retain `conditional_unverified` and no established temporal plateau.
+This baseline is **final production only**. The historical comparison CSV pools three production windows. The original comparison notebook now also plots matched final-production means and rank errors; the pooled CSV remains a different estimate. All 27 baseline chi errors are below 5%; 26 winding errors are below 5%. The remaining near-zero W2 point meets the absolute SE target .02. These are precision statements, not proof of equilibrium; all baseline rows retain `conditional_unverified` and no established temporal plateau.
 
 ## Additional simulations actually run
 
