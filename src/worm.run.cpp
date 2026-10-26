@@ -32,6 +32,8 @@ int main(int argc, char** argv) {
         std::cout << "# Constructing worm..." << std::endl;
         worm sim(parameters);
 
+        worm::check_restore_arguments(parameters, argc, argv);
+
         // Get checkpoint and output files EXPLICITLY
         std::string checkpoint_file = parameters["checkpoint"].as<std::string>();
         std::string output_file = parameters["outputfile"].as<std::string>();
@@ -101,6 +103,7 @@ int main(int argc, char** argv) {
         try {
             alps::hdf5::archive ar(output_file, "w");
             ar["/parameters"] << parameters;
+            sim.save_hamiltonian(ar, "/hamiltonian");
             if (has_measurements) ar["/simulation/results"] << results;
         }
         catch (const std::exception& e) {

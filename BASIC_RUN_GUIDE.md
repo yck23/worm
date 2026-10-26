@@ -148,8 +148,21 @@ Keep Processes 1 for these restarts. Editing the original INI does not change a 
 
 ## When you are ready for larger lattices
 
+For programmable potentials, including **fixed-N canonical runs**, follow the
+[map, uniform-potential, and off instructions](docs/programmable_potentials.md).
+That workflow uses `run_bose_square.ps1` and the programmable package. Set
+`canonical = N` and pass `-Canonical` for fixed N; use a constant `.dat` for a
+uniform offset, a varying `.dat` for nonuniform disorder, or `-DisablePotential`
+for zero added potential. The guide includes a supplied canonical INI and exact
+commands from this checkout's root. Use that guide's `Set-Location` command
+first: these features are built in the `duplicatesGit/worm` checkout.
+
 For chemical-potential-controlled Rb-87 runs, follow [GRAND_CANONICAL_RUN_GUIDE.md, Section 8](GRAND_CANONICAL_RUN_GUIDE.md#8-run-one-editable-parameter-file). Its longer calls and convergence checks are the next stage.
 
 For the original fixed-particle-number 64 x 64 reference, use [COMPLETE_BKT_GUIDE.md, Section 9](COMPLETE_BKT_GUIDE.md#9-commands-in-order-one-trustworthy-64-x-64-point). The detailed physics and algorithm explanation are in that same guide.
 
 If an executable is missing on another installation, the build procedure is in [WINDOWS_BUILD.md](WINDOWS_BUILD.md). The existing verified package on this desktop is sufficient for this exercise.
+
+For different disorder maps running concurrently, see the
+[independent disorder workers](docs/programmable_potentials.md#different-disorder-configurations-on-different-workers).
+Each realization gets its own equilibration and results; fixed N is supported.

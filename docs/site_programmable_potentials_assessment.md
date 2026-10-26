@@ -1,5 +1,9 @@
 ﻿# Feasibility of programmable on-site potentials
 
+This is the historical pre-implementation assessment. For the implemented
+feature, build instructions, and numerical speckle controls, see
+[programmable_potentials.md](programmable_potentials.md).
+
 Assessment date: 15 October 2026. Source reviewed: commit `c4ebe8a`, active
 `src/` implementation. Branch: `assess/site-programmable-potentials`.
 

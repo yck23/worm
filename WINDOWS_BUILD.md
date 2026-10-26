@@ -105,3 +105,23 @@ Custom parameter file:
 ```
 
 Results are written to `results/` by default.
+
+## Programmable site-potential build
+
+Pass `-ProgrammablePotential` to build a separate nonuniform package in
+`dist/windows-square-programmable` with ordinary/canonical serial/MPI binaries:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/build_windows.ps1 -ProgrammablePotential -Jobs 32
+```
+
+An existing compatible ALPSCore install can be reused without rebuilding it:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/build_windows.ps1 -ProgrammablePotential -AlpsInstall '\\alfs1.physics.ox.ac.uk\al\kuo\projects\worm\build-repro\alps-install' -Jobs 32
+```
+
+If its runtime DLLs are not in that installation or the sibling `alps-build`,
+pass `-AlpsRuntimeDirectory` explicitly. The existing dependency is read only.
+See [programmable_potentials.md](docs/programmable_potentials.md) for generation,
+units, file ordering, execution, and restart behavior.

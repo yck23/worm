@@ -174,6 +174,9 @@ public :
   
   void output_final(const alps::results_type<worm>::type& results, alps::hdf5::archive& ar);
   void initialize();
+  void save_hamiltonian(alps::hdf5::archive& ar, const std::string& path) const;
+  const std::vector<double>& get_onsite_potential() const { return onsite_potential; }
+  static void check_restore_arguments(parameters_type const& params, int argc, char** argv);
   void test_conf();
   void print_update_statistics(std::ostream&) const;
   void print_params(std::ostream& os) const;
@@ -202,6 +205,12 @@ protected:
   double update_prob_cuml[update_count];
   double update_prob[update_count];
 private:
+  void initialize_hamiltonian();
+  void load_hamiltonian(alps::hdf5::archive& ar);
+  bool fully_periodic() const;
+  std::vector<double> onsite_potential;
+  std::string onsite_potential_source;
+  bool onsite_potential_enabled;
   void initialize_update_prob(update_tag begin, update_tag end);
   void initialize_update_prob();
 

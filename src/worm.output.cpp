@@ -1,5 +1,9 @@
 #include "worm.hpp"
 
+#define WORM_STRINGIFY_IMPL(value) #value
+#define WORM_STRINGIFY(value) WORM_STRINGIFY_IMPL(value)
+
+
 void worm::print_params(std::ostream& os) const {
 #ifdef UNISYS
   os << "# config : UNIFORM                                  : yes\n";
@@ -35,6 +39,14 @@ void worm::print_params(std::ostream& os) const {
   MyLatt->print_name(os);
   MyLatt->print_params(os);
   MyModel->print_params(os);
+  os << "# on-site V : enabled                               : " << (onsite_potential_enabled ? "yes" : "no (V_i=0; configured file ignored)") << "\n";
+  if (ModelClassifierName == "BoseHubbard" && !onsite_potential.empty()) {
+    const auto bounds = std::minmax_element(onsite_potential.begin(), onsite_potential.end());
+    const double mean = std::accumulate(onsite_potential.begin(), onsite_potential.end(), 0.) / onsite_potential.size();
+    os << "# on-site V : source (provenance only on restore)     : " << onsite_potential_source << "\n";
+    os << "# on-site V : min, mean, max                         : " << *bounds.first << "\t" << mean << "\t" << *bounds.second << "\n";
+    os << "# on-site V : energy convention                     : +V_i*n_i - mu*n_i\n";
+  }
   
 }
 
@@ -69,9 +81,104 @@ boost::multi_array<double,2> worm::serialize_op_string() const {
 }
 
 
+void worm::save_hamiltonian(alps::hdf5::archive& ar, const std::string& path) const {
+  const std::vector<int> shape = {
+    static_cast<int>(MyLatt->get_Ls(0)), static_cast<int>(MyLatt->get_Ls(1)),
+    static_cast<int>(MyLatt->get_Ls(2)), static_cast<int>(LATTICE::n_basis),
+    static_cast<int>(latt_dim), static_cast<int>(Nsites)};
+  const std::vector<int> periodic = {parameters["pbcx"].as<bool>(),
+    parameters["pbcy"].as<bool>(), parameters["pbcz"].as<bool>()};
+#ifdef UNISYS
+  const int uniform_build = 1;
+#else
+  const int uniform_build = 0;
+#endif
+  ar[path + "/schema_version"] << 1;
+  ar[path + "/model"] << ModelClassifierName;
+  ar[path + "/lattice"] << std::string(WORM_STRINGIFY(LATTICE));
+  ar[path + "/shape"] << shape;
+  ar[path + "/shape_convention"] << std::string("Lx,Ly,Lz,n_basis,dimension,n_sites");
+  ar[path + "/periodic"] << periodic;
+  ar[path + "/uniform_build"] << uniform_build;
+  ar[path + "/nmax"] << nmax;
+  ar[path + "/onsite_potential"] << onsite_potential;
+  ar[path + "/onsite_potential_enabled"] << static_cast<int>(onsite_potential_enabled);
+  ar[path + "/source_file"] << onsite_potential_source;
+  ar[path + "/site_index_convention"] << std::string("basis + n_basis * (x + Lx * (y + Ly * z))");
+  ar[path + "/energy_convention"] << std::string("BoseHubbard: U*n*(n-1)/2 + onsite_potential*n - mu*n; Total_Energy includes -mu*N");
+  ar[path + "/energy_units"] << std::string("same as the scalar Hamiltonian parameters; no implicit Hz conversion");
+  const std::vector<std::string> names = ModelClassifierName == "BoseHubbard"
+    ? std::vector<std::string>{"t_hop", "U_on", "mu", "V_nn"}
+    : std::vector<std::string>{"Jpm", "Jzz", "h"};
+  for (const auto& name : names) ar[path + "/" + name] << parameters[name].as<double>();
+}
+
+void worm::load_hamiltonian(alps::hdf5::archive& ar) {
+  const std::string path = "checkpoint/hamiltonian";
+  if (!ar.is_data(path + "/schema_version")) {
+#ifndef UNISYS
+    throw std::runtime_error("This checkpoint predates resolved nonuniform Hamiltonian storage; start a fresh programmable-potential run.");
+#else
+    return; // Historical uniform checkpoints already contain scalar parameters.
+#endif
+  }
+  int version, stored_nmax, stored_uniform;
+  std::string stored_model, stored_lattice;
+  std::vector<int> stored_shape, stored_periodic;
+  ar[path + "/schema_version"] >> version;
+  ar[path + "/model"] >> stored_model;
+  ar[path + "/lattice"] >> stored_lattice;
+  ar[path + "/shape"] >> stored_shape;
+  ar[path + "/periodic"] >> stored_periodic;
+  ar[path + "/uniform_build"] >> stored_uniform;
+  ar[path + "/nmax"] >> stored_nmax;
+#ifdef UNISYS
+  const int uniform_build = 1;
+#else
+  const int uniform_build = 0;
+#endif
+  const std::vector<int> shape = {
+    static_cast<int>(MyLatt->get_Ls(0)), static_cast<int>(MyLatt->get_Ls(1)),
+    static_cast<int>(MyLatt->get_Ls(2)), static_cast<int>(LATTICE::n_basis),
+    static_cast<int>(latt_dim), static_cast<int>(Nsites)};
+  const std::vector<int> periodic = {parameters["pbcx"].as<bool>(),
+    parameters["pbcy"].as<bool>(), parameters["pbcz"].as<bool>()};
+  if (version != 1 || stored_model != ModelClassifierName ||
+      stored_lattice != WORM_STRINGIFY(LATTICE) || stored_shape != shape ||
+      stored_periodic != periodic || stored_nmax != nmax || stored_uniform != uniform_build)
+    throw std::runtime_error("Checkpoint Hamiltonian/lattice/build metadata does not match this simulation.");
+  const std::vector<std::string> names = ModelClassifierName == "BoseHubbard"
+    ? std::vector<std::string>{"t_hop", "U_on", "mu", "V_nn"}
+    : std::vector<std::string>{"Jpm", "Jzz", "h"};
+  for (const auto& name : names) {
+    double stored;
+    ar[path + "/" + name] >> stored;
+    if (!std::isfinite(stored) || stored != parameters[name].as<double>())
+      throw std::runtime_error("Checkpoint Hamiltonian parameter mismatch: " + name);
+  }
+  // This field is optional for schema-1 checkpoints written before the
+  // explicit switch existed. The constructor already applies the old default.
+  int stored_enabled = static_cast<int>(onsite_potential_enabled);
+  if (ar.is_data(path + "/onsite_potential_enabled"))
+    ar[path + "/onsite_potential_enabled"] >> stored_enabled;
+  if (stored_enabled != static_cast<int>(onsite_potential_enabled))
+    throw std::runtime_error("Checkpoint on-site potential enabled flag does not match the parameters.");
+  ar[path + "/onsite_potential"] >> onsite_potential;
+  ar[path + "/source_file"] >> onsite_potential_source;
+  if (onsite_potential.size() != static_cast<std::size_t>(Nsites))
+    throw std::runtime_error("Checkpoint on-site potential has the wrong number of sites.");
+  for (double value : onsite_potential) {
+    if (!std::isfinite(value)) throw std::runtime_error("Checkpoint on-site potential contains a non-finite value.");
+    if (!onsite_potential_enabled && value != 0.)
+      throw std::runtime_error("Checkpoint has a nonzero on-site potential while onsite_potential_enabled is false.");
+  }
+  MyModel->set_onsite_potential(onsite_potential);
+}
+
 void worm::save(alps::hdf5::archive & ar) const {
   // Most of the save logic is already implemented in the base class
   alps::mcbase::save(ar);
+  save_hamiltonian(ar, "checkpoint/hamiltonian");
 
   // random number engine
   std::ostringstream engine_ss;
@@ -115,6 +222,9 @@ void worm::save(alps::hdf5::archive & ar) const {
 
 
 void worm::load(alps::hdf5::archive & ar) {
+  // Validate against the parameters used to construct MyModel before ALPS
+  // replaces parameters with the rank-local checkpoint's copy.
+  load_hamiltonian(ar);
   alps::mcbase::load(ar);
 
   worm_diag = true;
