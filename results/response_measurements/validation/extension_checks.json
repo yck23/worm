@@ -1,0 +1,32 @@
+{
+  "status": "passed",
+  "completed_date": "2026-10-26",
+  "points": [
+    {
+      "point": "l128t030",
+      "additional_runtime_seconds": 1200,
+      "cumulative_runtime_seconds": 1800,
+      "old_complete_blocks": 23542,
+      "new_complete_blocks": 73287,
+      "old_history_prefix_preserved": true,
+      "merged_output_verified": true,
+      "ready_for_review": true,
+      "convergence_certified": false,
+      "W2_relative_blocking_se": 0.03364937489943356,
+      "scaled_chi_relative_blocking_se": 0.014449572117259425
+    },
+    {
+      "point": "l128t045",
+      "additional_runtime_seconds": 1200,
+      "cumulative_runtime_seconds": 1800,
+      "old_complete_blocks": 4392,
+      "new_complete_blocks": 13402,
+      "old_history_prefix_preserved": true,
+      "merged_output_verified": true,
+      "ready_for_review": true,
+      "convergence_certified": false,
+      "W2_relative_blocking_se": 0.027408905476047775,
+      "scaled_chi_relative_blocking_se": 0.020904051345972122
+    }
+  ]
+}

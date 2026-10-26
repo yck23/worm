@@ -1,7 +1,7 @@
 {
   "status": "passed",
   "simulations_launched": 0,
-  "command": "python scripts/collect_response_measurements.py --points l128t028 l128t030 l128t045 l64t070 --verify",
+  "command": "Post-extension verification of latest cumulative outputs and checkpoints",
   "points": [
     {
       "point": "l128t028",
@@ -26,56 +26,59 @@
           "rank_weighted_mean": 0.010062033722296615
         }
       ],
+      "merged_output": "run01.h5",
       "source_checks": "results/response_measurements/sampling/l128t028/history_checks.json"
     },
     {
       "point": "l128t030",
       "rank_count": 8,
       "interval": 10,
-      "completed_scalar_blocks": 23542,
-      "partial_closed_sweeps": 39,
-      "closed_sweeps_from_histories": 235459,
-      "checkpoint_number_samples": 235459,
-      "merged_number_samples": 235459,
+      "completed_scalar_blocks": 73287,
+      "partial_closed_sweeps": 35,
+      "closed_sweeps_from_histories": 732905,
+      "checkpoint_number_samples": 732905,
+      "merged_number_samples": 732905,
       "scalar_checks": [
         {
           "observable": "Superfluid_susceptibility",
-          "count": 23542,
-          "merged_mean": 4695.844432905153,
-          "rank_weighted_mean": 4695.844432905154
+          "count": 73287,
+          "merged_mean": 4868.002035898356,
+          "rank_weighted_mean": 4868.002035898357
         },
         {
           "observable": "Winding_number_squared_sum",
-          "count": 23542,
-          "merged_mean": 0.3891258176875371,
-          "rank_weighted_mean": 0.3891258176875371
+          "count": 73287,
+          "merged_mean": 0.3838416090166059,
+          "rank_weighted_mean": 0.3838416090166059
         }
       ],
+      "merged_output": "run02.h5",
       "source_checks": "results/response_measurements/sampling/l128t030/history_checks.json"
     },
     {
       "point": "l128t045",
       "rank_count": 8,
       "interval": 10,
-      "completed_scalar_blocks": 4392,
-      "partial_closed_sweeps": 44,
-      "closed_sweeps_from_histories": 43964,
-      "checkpoint_number_samples": 43964,
-      "merged_number_samples": 43964,
+      "completed_scalar_blocks": 13402,
+      "partial_closed_sweeps": 33,
+      "closed_sweeps_from_histories": 134053,
+      "checkpoint_number_samples": 134053,
+      "merged_number_samples": 134053,
       "scalar_checks": [
         {
           "observable": "Superfluid_susceptibility",
-          "count": 4392,
-          "merged_mean": 16527.627935379667,
-          "rank_weighted_mean": 16527.627935379667
+          "count": 13402,
+          "merged_mean": 16889.271086026107,
+          "rank_weighted_mean": 16889.271086026107
         },
         {
           "observable": "Winding_number_squared_sum",
-          "count": 4392,
-          "merged_mean": 2.549658469945355,
-          "rank_weighted_mean": 2.549658469945355
+          "count": 13402,
+          "merged_mean": 2.567154156096105,
+          "rank_weighted_mean": 2.567154156096105
         }
       ],
+      "merged_output": "run02.h5",
       "source_checks": "results/response_measurements/sampling/l128t045/history_checks.json"
     },
     {
@@ -101,6 +104,7 @@
           "rank_weighted_mean": 4.66854500483923
         }
       ],
+      "merged_output": "run01.h5",
       "source_checks": "results/response_measurements/sampling/l64t070/history_checks.json"
     }
   ]

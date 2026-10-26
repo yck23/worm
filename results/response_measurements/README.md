@@ -20,16 +20,20 @@ This baseline is **final production only**. The earlier comparison notebook pool
 
 ## Additional simulations actually run
 
-Four eight-rank warm continuations ran for a requested 600 seconds each on 25 October 2026, in two concurrent batches. Their 147012 completed scalar intervals cover 1470120 eligible updates, plus 163 partial-interval updates retained only in checkpoints. Original source checkpoints were read only. The new rank streams continue the same source RNG lineages, so they are not fresh independent replicas and are not pooled with the baseline as such.
+Four eight-rank warm continuations initially ran for 600 seconds each on 25 October 2026. On 26 October, the L128 beta=.30 and .45 families each received another 1200 seconds concurrently, without resetting their statistics. These families now have 1800 seconds each; the other two retain 600 seconds. All four cumulative histories meet the defined numerical precision and blocking screens.
 
-| L | beta | Completed intervals, all ranks | Minimum intervals/rank | W2 ± rank SE | chi/L^1.75 ± rank SE | Result of pilot checks |
-|---:|---:|---:|---:|---:|---:|---|
-| 128 | .28 | 109779 | 12559 | .01006 ± .00210 | .25201 ± .00497 | Numerical screen met; near-zero W2 uses absolute target |
-| 128 | .30 | 23542 | 2626 | .38913 ± .01917 | .96404 ± .02756 | Blocked W2 SE .02339 (6.0%): more sampling needed |
-| 128 | .45 | 4392 | 488 | 2.54966 ± .13051 | 3.39307 ± .09175 | No stable blocking plateau; W2 rank SE 5.12% |
-| 64 | .70 | 9299 | 1083 | 4.66855 ± .10204 | 3.98947 ± .06981 | Numerical screen met |
+The cumulative 205767 completed scalar intervals cover 2057670 eligible updates, plus 148 partial-interval updates retained only in checkpoints. Original source checkpoints were read only, and every previously completed history record was preserved exactly. These are continued source RNG lineages, so they remain separate from the baseline.
 
-These are **conditional pilot results**. All four need independent-start/equilibration and nmax convergence review before a precision physical claim. No transition temperature is fitted here. The beta .30 late-minus-early winding change is about 2.15 paired SE; the three-SE screening threshold does not prove absence of drift.
+| L | beta | Requested seconds | Completed intervals | Min intervals/rank | W2 +/- rank SE | chi/L^1.75 +/- rank SE | W2 blocking relative SE |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 128 | 0.28 | 600 | 109779 | 12559 | 0.01006 +/- 0.00210 | 0.25201 +/- 0.00497 | 20.0% (absolute target) |
+| 128 | 0.30 | 1800 | 73287 | 8867 | 0.38384 +/- 0.01141 | 0.99939 +/- 0.01126 | 3.4% |
+| 128 | 0.45 | 1800 | 13402 | 1477 | 2.56715 +/- 0.06022 | 3.46732 +/- 0.08436 | 2.7% |
+| 64 | 0.70 | 600 | 9299 | 1083 | 4.66855 +/- 0.10204 | 3.98947 +/- 0.06981 | 2.5% |
+
+All four pass the numerical screens, including both rank and blocking errors against the stated precision target. These remain **conditional sampling results**: independent-start/equilibration and nmax convergence review are required before a precision physical claim. No transition temperature is fitted. The L128 beta=.45 late-minus-early scaled susceptibility change is about 2.18 paired SE; the three-SE screening threshold does not prove absence of drift.
+
+Before extension, beta=.30 missed the 5% winding target (blocked SE .02339, 6.0%) and beta=.45 lacked a demonstrated plateau. After extension, their winding blocking SEs are .01292 (3.4%) and .07036 (2.7%), respectively. The earlier run01 HDF5 snapshots remain archived; run02 outputs and history.npz at those two points are cumulative and must not be pooled with run01 as independent data.
 
 The analyzer reblocks within each rank, then combines rank variances with squared count weights. It checks the three coarsest sufficiently populated blocking levels, requiring errors within 25%, at least 50 total blocks and at least four per rank, and the shortest of these levels to exceed four estimated autocorrelation times. These are preliminary numerical gates, not a certification. It separately requires at least eight ranks, 64 intervals per rank and reasonably balanced counts. The reported `_se` columns remain whole-rank jackknife errors; `_blocking_se` columns are the maximum error across the selected triple and are unavailable if that screen fails. Both must meet the precision target for the combined precision flag.
 
@@ -37,7 +41,7 @@ The displayed histories and baseline windows are correlated continuations. Visua
 
 ## Run settings and sufficient errors
 
-The actual pilot settings were:
+The initial pilot settings were:
 
 ```ini
 Nmeasure = 1
@@ -49,6 +53,8 @@ sweeps = 1000000000
 thermalization = 50000
 runtimelimit = 600
 ```
+
+The two extensions used `runtimelimit=1200`; all other measurement settings were retained. The saved parameters.ini files describe the initial setup; per-invocation runtime and output selection are recorded in each manifest and HDF5 output.
 
 `thermalization=50000` is inherited provenance, not a recommendation for a fresh start. These runs resumed warm states; the one-time statistics reset sets the counter at the threshold. Select fresh-run burn-in from multiple starts and stability of winding, coherence, density and energy. A short stable energy trace alone is insufficient.
 
@@ -62,11 +68,12 @@ For B long blocks of k recorded intervals, each rank needs at least `B*k*Nrespon
 
 | Point | Selected coarse block size k | Updates/rank for 50 blocks | Current minimum completed updates/rank |
 |---|---:|---:|---:|
-| L128 beta .28 | 1024 | 512000 | 125590 |
-| L128 beta .30 | 256 | 128000 | 26260 |
-| L64 beta .70 | 128 | 64000 | 10830 |
+| L128 beta 0.28 | 1024 | 512000 | 125590 |
+| L128 beta 0.30 | 1024 | 512000 | 88670 |
+| L128 beta 0.45 | 128 | 64000 | 14770 |
+| L64 beta 0.70 | 128 | 64000 | 10830 |
 
-For L128 beta .45 no block size is yet justified; extend and reassess first. These calculations are counts, not guaranteed wall times or proofs of decorrelation. Slow modes and common start bias can exceed estimates from a short pilot. Occupation-cutoff, continuum/lattice-spacing and finite-size uncertainties must be assessed separately.
+All four now have a justified preliminary blocking scale under the numerical screen, but none meets this stronger 50-long-blocks-per-rank planning target at its selected coarse scale. These calculations are counts, not guaranteed wall times or proofs of decorrelation. Slow modes and common start bias can exceed estimates from a short history. Occupation-cutoff, continuum/lattice-spacing and finite-size uncertainties must be assessed separately.
 
 ## Reproduce the notebook and analysis
 
@@ -101,7 +108,7 @@ cmake --build V:/kuo/projects/worm/build-repro/worm-square-response --parallel 8
 
 Adjust local dependency paths on another machine. Physics/measurement INI changes do not themselves require rebuilding. Source changes do. The collector currently targets Windows, Microsoft MPI and the repository's `dist/windows-square` DLLs.
 
-The following are commands for a deliberate future extension; they were not run after the pilot results:
+The following extension was executed on 26 October 2026; repeating it would start another cumulative extension:
 
 ```powershell
 python scripts/collect_response_measurements.py --points l128t030 l128t045 --run --seconds 1200 --jobs 2

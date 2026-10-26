@@ -1,68 +1,68 @@
 {
-  "time_utc": "2026-10-25T23:19:44.520667+00:00",
+  "time_utc": "2026-10-26T07:57:12.979805+00:00",
   "ranks": [
     {
       "rank": 0,
-      "blocks": 2668,
-      "partial_count": 8,
-      "sweeps": 76688
+      "blocks": 8913,
+      "partial_count": 7,
+      "sweeps": 139137
     },
     {
       "rank": 1,
-      "blocks": 2994,
-      "partial_count": 5,
-      "sweeps": 79945
+      "blocks": 9077,
+      "partial_count": 3,
+      "sweeps": 140773
     },
     {
       "rank": 2,
-      "blocks": 3051,
-      "partial_count": 8,
-      "sweeps": 80518
+      "blocks": 9011,
+      "partial_count": 1,
+      "sweeps": 140111
     },
     {
       "rank": 3,
-      "blocks": 2626,
-      "partial_count": 2,
-      "sweeps": 76262
+      "blocks": 9090,
+      "partial_count": 8,
+      "sweeps": 140908
     },
     {
       "rank": 4,
-      "blocks": 3013,
-      "partial_count": 0,
-      "sweeps": 80130
+      "blocks": 8867,
+      "partial_count": 8,
+      "sweeps": 138678
     },
     {
       "rank": 5,
-      "blocks": 3423,
-      "partial_count": 5,
-      "sweeps": 84235
+      "blocks": 9631,
+      "partial_count": 1,
+      "sweeps": 146311
     },
     {
       "rank": 6,
-      "blocks": 2877,
-      "partial_count": 9,
-      "sweeps": 78779
+      "blocks": 9722,
+      "partial_count": 6,
+      "sweeps": 147226
     },
     {
       "rank": 7,
-      "blocks": 2890,
-      "partial_count": 2,
-      "sweeps": 78902
+      "blocks": 8976,
+      "partial_count": 1,
+      "sweeps": 139761
     }
   ],
-  "merged_output": "run01.h5",
+  "merged_output": "run02.h5",
   "merged_checks": [
     {
       "observable": "Superfluid_susceptibility",
-      "count": 23542,
-      "merged_mean": 4695.844432905153,
-      "rank_weighted_mean": 4695.844432905154
+      "count": 73287,
+      "merged_mean": 4868.002035898356,
+      "rank_weighted_mean": 4868.002035898357
     },
     {
       "observable": "Winding_number_squared_sum",
-      "count": 23542,
-      "merged_mean": 0.3891258176875371,
-      "rank_weighted_mean": 0.3891258176875371
+      "count": 73287,
+      "merged_mean": 0.3838416090166059,
+      "rank_weighted_mean": 0.3838416090166059
     }
   ],
   "status": "verified",

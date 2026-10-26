@@ -38,3 +38,7 @@ python scripts/collect_response_measurements.py --points l128t028 l128t030 l128t
 ```
 
 The collector rejects checkpoint-save warnings even when the MPI process returns success. It checks merged counts and means before publishing a history export. [collector_checks.json](collector_checks.json) records six synthetic HDF5 regression groups covering empty histories, omitted zero-count accumulators, stale counts, inconsistent means, missing nonempty accumulators, and save warnings. Reproduce those checks with `python scripts/test_response_collection.py`; this test launches no simulations.
+
+## Extensions completed on 26 October 2026
+
+[extension_checks.json](extension_checks.json) verifies the two additional 1200-second, eight-rank continuations. Their new cumulative histories preserve every previously completed record exactly, and scalar means/counts match the latest merged run02 outputs. All four current histories pass the numerical precision and blocking screens; the updated family verification report covers the latest output of each family. Passing remains conditional on independent-start equilibration and physical cutoff checks.

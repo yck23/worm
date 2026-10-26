@@ -75,6 +75,24 @@
         497,
         488
       ]
+    },
+    {
+      "number": 2,
+      "started_utc": "2026-10-26T07:36:44.288566+00:00",
+      "completed_utc": "2026-10-26T07:57:05.219015+00:00",
+      "runtime_seconds": 1200,
+      "output": "run02.h5",
+      "executable_sha256": "6b4e5af66e464c66203f46d00a74ae769259d84ccb2de516a079842eac5904f0",
+      "rank_blocks": [
+        1797,
+        1646,
+        1703,
+        1595,
+        1803,
+        1707,
+        1674,
+        1477
+      ]
     }
   ],
   "executable": "build-repro\\worm-square-response\\qmc_worm_mpi.exe"
