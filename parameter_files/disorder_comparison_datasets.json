@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "datasets": [
+    {
+      "beta": 0.35,
+      "directory": "results/disorder_beta035_20261026"
+    },
+    {
+      "beta": 0.6,
+      "directory": "results/disorder_beta060_20261027"
+    },
+    {
+      "beta": 0.45,
+      "directory": "results/disorder_beta045_20261028"
+    },
+    {
+      "beta": 0.52,
+      "directory": "results/disorder_beta052_20261028"
+    }
+  ]
+}

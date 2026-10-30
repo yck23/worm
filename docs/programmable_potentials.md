@@ -354,7 +354,12 @@ metadata are rejected because their parameters were previously hardcoded.
 `Density_Distribution` reports site occupations in file order, including for
 open boundaries. Fully periodic lattices support `Winding_number_squared`.
 Translationally binned one-body and density correlations remain disabled in
-nonuniform builds. The pre-existing on-site `Density_Matrix` limitation of the
+nonuniform builds. The scalar `Equal_time_susceptibility` is available for fully
+periodic single-basis Bose-Hubbard lattices, including static disorder: it sums
+the off-site equal-time worm events before binning and adds physical density.
+`Winding_number_squared_total` likewise records the component sum before binning.
+For the canonical beta=0.35 scan, matching the clean-system comparison notebook,
+see the [line-by-line build, execution and plotting guide](disorder_response_beta035.md). The pre-existing on-site `Density_Matrix` limitation of the
 uniform solver is not addressed by this feature.
 
 ```python

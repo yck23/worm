@@ -166,3 +166,6 @@ If an executable is missing on another installation, the build procedure is in [
 For different disorder maps running concurrently, see the
 [independent disorder workers](docs/programmable_potentials.md#different-disorder-configurations-on-different-workers).
 Each realization gets its own equilibration and results; fixed N is supported.
+
+For the beta=0.35 disorder-strength scan on 32, 64 and 128 sites per side, see
+the [build-to-execution instructions](docs/disorder_response_beta035.md).

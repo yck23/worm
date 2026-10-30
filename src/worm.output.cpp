@@ -195,6 +195,7 @@ void worm::save(alps::hdf5::archive & ar) const {
   ar["checkpoint/configuration/nrvertex"] << nrvertex;
   ar["checkpoint/configuration/nr_of_particles"] << number_of_particles;
   ar["checkpoint/configuration/state"] << state;
+  ar["checkpoint/configuration/hist_susceptibility_offsite"] << hist_susceptibility_offsite;
 #ifdef UNISYS
   ar["checkpoint/configuration/hist_densmat"] << hist_densmat;
 #ifdef MATSUBARA_MEAS
@@ -259,8 +260,21 @@ void worm::load(alps::hdf5::archive & ar) {
   ar["checkpoint/configuration/nrvertex"] >> nrvertex;
   ar["checkpoint/configuration/nr_of_particles"] >> number_of_particles;
   ar["checkpoint/configuration/state"] >> state;
+  if (ar.is_data("checkpoint/configuration/hist_susceptibility_offsite"))
+    ar["checkpoint/configuration/hist_susceptibility_offsite"] >> hist_susceptibility_offsite;
+  else {
+    hist_susceptibility_offsite = 0.;
+    // Older disorder checkpoints have no equal-time histogram to restore.
+    // Start a complete new measurement interval rather than retaining a partial one.
+#ifndef UNISYS
+    counter[counter_tag::MEASURE2] = 0;
+#endif
+  }
 #ifdef UNISYS
   ar["checkpoint/configuration/hist_densmat"] >> hist_densmat;
+  if (!ar.is_data("checkpoint/configuration/hist_susceptibility_offsite"))
+    for (size_t i = 1; i < hist_densmat.size(); ++i)
+      hist_susceptibility_offsite += hist_densmat[i];
 #ifdef MATSUBARA_MEAS
   if (Nfreq > 0) {
     ar["checkpoint/configuration/hist_grtau_re"] >> hist_grtau_re;

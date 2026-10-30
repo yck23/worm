@@ -308,6 +308,8 @@ private:
 #endif
 
   double hist_dm_fac;
+  // Equal-time off-site spatial sum, accumulated before binning for covariance.
+  double hist_susceptibility_offsite = 0.;
 #ifdef UNISYS
   std::vector<double> hist_densmat;
 #ifdef MATSUBARA_MEAS

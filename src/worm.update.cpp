@@ -79,17 +79,15 @@ void worm::update() {
     }
     else {
       mG += 1.;
-#ifdef UNISYS
       if (sweeps >= thermalization_sweeps) {
         if (worm_meas_densmat) measure_density_matrix();
-#ifdef MATSUBARA_MEAS
+#if defined(UNISYS) && defined(MATSUBARA_MEAS)
         if (worm_at_stop == 0) {
           measure_Gktau();
           measure_G0tau();
         }
 #endif
       }
-#endif
     }
   } while (!worm_diag);
 

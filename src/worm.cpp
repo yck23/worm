@@ -210,6 +210,8 @@ worm::worm(parameters_type const & parameters, std::size_t seed_offset) : alps::
     << alps::accumulators::LogBinningAccumulator<double >("Number_of_particles_squared")
     << alps::accumulators::LogBinningAccumulator<vector<double> >("Density_Distribution")
     << alps::accumulators::LogBinningAccumulator<vector<double> >("Winding_number_squared")
+    << alps::accumulators::LogBinningAccumulator<double>("Winding_number_squared_total")
+    << alps::accumulators::LogBinningAccumulator<double>("Equal_time_susceptibility")
 #ifdef UNISYS
     << alps::accumulators::LogBinningAccumulator<vector<double> >("Density_Matrix")
     //<< alps::accumulators::LogBinningAccumulator<vector<double> >("Density_Matrix2")
@@ -488,6 +490,7 @@ void worm::measure() {
   ++sweeps;
   if (sweeps < thermalization_sweeps) return;
   if (sweeps == thermalization_sweeps) {
+    hist_susceptibility_offsite = 0.;
 #ifdef UNISYS
     for (size_t i=0; i < hist_densmat.size(); i++) hist_densmat[i] = 0;
 #ifdef MATSUBARA_MEAS
@@ -516,7 +519,12 @@ void worm::measure() {
     measurements["Total_Energy"] << Epot_measure + Ek;
     measurements["Number_of_particles"] << number_of_particles * 1.;
     measurements["Number_of_particles_squared"] << number_of_particles * number_of_particles * 1.;
-    if (fully_periodic()) measurements["Winding_number_squared"] << wsq;
+    if (fully_periodic()) {
+      measurements["Winding_number_squared"] << wsq;
+      double total_wsq = 0.;
+      for (double component : wsq) total_wsq += component;
+      measurements["Winding_number_squared_total"] << total_wsq;
+    }
   }
     
   if(counter[counter_tag::MEASURE2] >= Nmeasure2) {
@@ -557,6 +565,9 @@ void worm::force_reset_statistics() {
   reset(measurements["Number_of_particles_squared"]);
   reset(measurements["Density_Distribution"]);
   reset(measurements["Winding_number_squared"]);
+  reset(measurements["Winding_number_squared_total"]);
+  reset(measurements["Equal_time_susceptibility"]);
+  hist_susceptibility_offsite = 0.;
 #ifdef UNISYS
   reset(measurements["Density_Matrix"]);
   //reset(measurements["Density_Matrix2"]);
@@ -653,6 +664,16 @@ void worm::measure_corrfun() {
   for (SiteIndex i = 0; i < Nsites; ++i)
     dens_distr[i] = MyModel->stateval(dummy_it[i]->before());
   measurements["Density_Distribution"] << dens_distr;
+  // chi_s = (1/Nsites) sum_ij <b_i^dagger b_j>. Endpoint coincidences
+  // use the physical density, avoiding the legacy on-site worm estimator.
+  // Summing over all worm origins is valid also for a fixed nonuniform map.
+  if (LATTICE::n_basis == 1 && fully_periodic() && ModelClassifierName == "BoseHubbard") {
+    double density = 0.;
+    for (double occupation : dens_distr) density += occupation / Nsites;
+    measurements["Equal_time_susceptibility"]
+        << hist_susceptibility_offsite * hist_dm_fac / Nmeasure2 + density;
+  }
+  hist_susceptibility_offsite = 0.;
 #ifdef UNISYS
   //Corrfun is only measured for periodic boundary conditions
   if (LATTICE::n_basis > 1) return;
@@ -721,6 +742,9 @@ void worm::measure_corrfun() {
 
 
 void worm::measure_density_matrix() {
+  if (LATTICE::n_basis == 1 && fully_periodic() && ModelClassifierName == "BoseHubbard"
+      && worm_head_it->link() != worm_tail_it->link())
+    hist_susceptibility_offsite += 1. / C_worm;
 #ifdef UNISYS
   if (LATTICE::n_basis > 1) return;
   if (!parameters["pbcx"]) return;

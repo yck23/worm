@@ -15,6 +15,9 @@ import argparse
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from datetime import datetime, timezone
 import hashlib
+import errno
+import time
+import uuid
 import json
 import operator
 import os
@@ -105,9 +108,25 @@ def _positive(name: str, value: float, *, zero: bool = False) -> float:
 
 
 def _write_json(path: Path, value: dict) -> None:
-    temporary = path.with_name(path.name + ".tmp")
-    temporary.write_text(json.dumps(value, indent=2, allow_nan=False) + "\n", encoding="utf-8")
-    temporary.replace(path)
+    # Independent temporary names and bounded retries tolerate transient SMB
+    # sharing/rename failures without exposing partially written manifests.
+    payload = json.dumps(value, indent=2, allow_nan=False) + "\n"
+    temporary = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
+    try:
+        for attempt in range(8):
+            try:
+                temporary.write_text(payload, encoding="utf-8")
+                temporary.replace(path)
+                return
+            except OSError as exc:
+                if attempt == 7 or exc.errno not in (errno.EINVAL, errno.EACCES, errno.EBUSY):
+                    raise
+                time.sleep(min(0.1 * 2**attempt, 1.0))
+    finally:
+        try:
+            temporary.unlink(missing_ok=True)
+        except OSError:
+            pass
 
 
 def _sha256(path: Path) -> str:
