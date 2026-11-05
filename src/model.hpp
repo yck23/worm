@@ -2,11 +2,13 @@
 
 #include "lattice.hpp"
 #include <math.h>
+#include <cmath>
 #include <vector>
 #include <string>
 #include <algorithm>
 #include <iterator>
 #include <stdexcept>
+#include <numeric>
 
 class model {
 public:
@@ -34,6 +36,11 @@ public:
   virtual void user_set_params(const std::vector<double>&, const std::vector<std::size_t>& ) = 0; 
 #endif
   
+  virtual void set_onsite_potential(const std::vector<double>& values) {
+    if (std::any_of(values.begin(), values.end(), [](double v) { return v != 0.; }))
+      throw std::invalid_argument("On-site potentials are supported only for BoseHubbard.");
+  }
+
   virtual double stateval(const StateType n) const = 0;
 
   virtual void print_params(std::ostream&) const = 0;
@@ -42,7 +49,9 @@ public:
   StateType get_nmin() const { return nmin;}
   
   static void define_parameters(alps::params& params) {
-    params.define<std::string>("model", "BoseHubbard", "name of the Hamiltonian. Choose either BoseHubbard or XXZ");
+    params.define<std::string>("model", "BoseHubbard", "name of the Hamiltonian. Choose either BoseHubbard or XXZ")
+      .define<std::string>("onsite_potential_file", "", "dense static Bose-Hubbard V_i map in simulation energy units; requires UNIFORM=OFF when enabled")
+      .define<bool>("onsite_potential_enabled", true, "enable the configured on-site potential; false ignores the file and uses V_i=0");
   }
 
   static bool parameters_supplied(alps::params const& params) {
@@ -55,6 +64,17 @@ public:
   std::string get_name() const { return model_name;}
   
 protected:
+  static void print_profile(std::ostream& os, const char* name, const std::vector<double>& values) {
+    os << "# model : " << name << " : ";
+    if (values.empty()) os << "(no entries)";
+    else {
+      const auto bounds = std::minmax_element(values.begin(), values.end());
+      if (*bounds.first == *bounds.second) os << *bounds.first;
+      else os << "range [" << *bounds.first << ", " << *bounds.second << "]";
+      os << " (" << values.size() << " entries)";
+    }
+    os << "\n";
+  }
   std::string model_name;
   StateType nmax;
   StateType nmin;
@@ -80,12 +100,10 @@ public:
 
   static void define_custom_model_parameters(alps::params & params) {
     params
-#ifdef UNISYS
       .define<double>("t_hop",                1.0,    "hopping amplitude in the Bose-Hubbard model t b^{\\dagger}_i b_j")
       .define<double>("U_on",                 4.0,    "on-site Bose-Hubbard repulsion U n_i(n_i-1)/2")
       .define<double>("V_nn",                 0.0,    "nearest neighbor density density repulsion in Bose-Hubbard model V n_i n_j")
       .define<double>("mu",                   0.7,    "chemical potential - mu n_i")
-#endif
       .define<int>("nmax",                    10,     "maximum occupation number");
   }
   
@@ -110,7 +128,7 @@ public:
     if (b) w += -mu * n;
     return w;
 #else
-    double w = U_on[s] * n * (n-1.)/2. ;
+    double w = U_on[s] * n * (n-1.)/2. + onsite_potential[s] * n;
     if (b) w += -mu[s] * n;
     return w;
 #endif
@@ -145,13 +163,14 @@ public:
 #ifndef UNISYS
   void user_set_params(const std::vector<double>& p, const std::vector<std::size_t>& dims) override {
     if (dims.size() != 4) throw std::invalid_argument("Expected 4 dimensions");
-    size_t total = std::accumulate(dims.begin(), dims.end(), 0);
+    size_t total = std::accumulate(dims.begin(), dims.end(), std::size_t(0));
     if (total != p.size()) throw std::invalid_argument("Dimension mismatch");
     
     t_hop.assign(p.begin(), p.begin() + dims[0]);
     U_on.assign(p.begin() + dims[0], p.begin() + dims[0] + dims[1]);
     mu.assign(p.begin() + dims[0] + dims[1], p.begin() + dims[0] + dims[1] + dims[2]);
     V_nn.assign(p.begin() + dims[0] + dims[1] + dims[2], p.end());
+    onsite_potential.assign(dims[1], 0.);
     //std::copy(p.begin(), p.begin() + dims[0], std::back_inserter(t_hop));
     //std::copy(p.begin() + dims[0], p.begin() + dims[0] + dims[1], std::back_inserter(U_on));
     //std::copy(p.begin() + dims[0] + dims[1], p.begin() + dims[0] + dims[1] + dims[2], std::back_inserter(mu));
@@ -160,6 +179,19 @@ public:
 #endif
   
   
+  void set_onsite_potential(const std::vector<double>& values) override {
+#ifdef UNISYS
+    if (std::any_of(values.begin(), values.end(), [](double v) { return v != 0.; }))
+      throw std::invalid_argument("Rebuild with PROGRAMMABLE_POTENTIAL=ON for an on-site potential.");
+#else
+    if (values.size() != U_on.size())
+      throw std::invalid_argument("On-site potential size does not match the Hamiltonian.");
+    for (double value : values)
+      if (!std::isfinite(value)) throw std::invalid_argument("On-site potential must be finite.");
+    onsite_potential = values;
+#endif
+  }
+
   void print_params(std::ostream& os) const override {
 #ifdef UNISYS
     os << "# model : name                                      : " << model_name << "\n";
@@ -172,10 +204,10 @@ public:
     os << "# model : name                                      : " << model_name << "\n";
     os << "# model : nmin, nmax                                : " << nmin << "\t" << nmax << "\n";
     os << "# User specified inhomogeneous parameters:\n";
-    os << "# model : U_on                                      : "; for (size_t i=0; i < U_on.size(); ++i) os  << U_on[i] << " "; os << "\n";
-    os << "# model : V_nn                                      : "; for (size_t i=0; i < V_nn.size(); ++i) os  << V_nn[i] << " "; os << "\n";
-    os << "# model : mu                                        : "; for (size_t i=0; i < mu.size()  ; ++i) os  << mu[i]   << " "; os << "\n";
-    os << "# model : t_hop                                     : "; for (size_t i=0; i < t_hop.size(); ++i) os << t_hop[i] << " "; os << "\n";
+    print_profile(os, "U_on", U_on);
+    print_profile(os, "V_nn", V_nn);
+    print_profile(os, "mu", mu);
+    print_profile(os, "t_hop", t_hop);
 #endif
   }
 
@@ -187,6 +219,7 @@ private:
   double t_hop;
 #else
   std::vector<double> U_on;
+  std::vector<double> onsite_potential;
   std::vector<double> V_nn;
   std::vector<double> mu;
   std::vector<double> t_hop;
@@ -214,11 +247,9 @@ public:
 
   static void define_custom_model_parameters(alps::params & params) {
     params
-#ifdef UNISYS
       .define<double>("Jpm",            1.0,    "XX coupling")
       .define<double>("Jzz",            1.0,    "Z coupling")
       .define<double>("h",              0.2,    "ext. field coupling")
-#endif
       .define<int>("nmax",                1,    "2S (two times spin)");
   }
   
@@ -275,9 +306,11 @@ public:
 
 #ifndef UNISYS  
   void user_set_params(const std::vector<double>& p ,const std::vector<std::size_t>& dims) override {
-    std::copy(p.begin(), p.begin() + dims[0], std::back_inserter(Jpm));
-    std::copy(p.begin()+dims[0], p.begin() + dims[0] + dims[1], std::back_inserter(Jzz));
-    std::copy(p.begin() + dims[0] + dims[1], p.end(), std::back_inserter(h));
+    if (dims.size() != 3 || std::accumulate(dims.begin(), dims.end(), std::size_t(0)) != p.size())
+      throw std::invalid_argument("XXZ parameter dimensions do not match.");
+    Jpm.assign(p.begin(), p.begin() + dims[0]);
+    Jzz.assign(p.begin() + dims[0], p.begin() + dims[0] + dims[1]);
+    h.assign(p.begin() + dims[0] + dims[1], p.end());
   }
 #endif
   
@@ -290,9 +323,9 @@ public:
     os << "# model : h                                    : " << h    << "\n";
 #else
     os << "# User specified inhomogeneous parameters:\n";
-    os << "# model : Jpm                                      : "; for (size_t i=0; i < Jpm.size(); ++i) os  << Jpm[i] << " "; os << "\n";
-    os << "# model : Jzz                                      : "; for (size_t i=0; i < Jzz.size(); ++i) os  << Jzz[i] << " "; os << "\n";
-    os << "# model : h                                        : "; for (size_t i=0; i < h.size()  ; ++i) os  << h[i]   << " "; os << "\n";
+    print_profile(os, "Jpm", Jpm);
+    print_profile(os, "Jzz", Jzz);
+    print_profile(os, "h", h);
 #endif
   }
 

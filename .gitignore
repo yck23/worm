@@ -30,3 +30,5 @@ __pycache__/
 !patches/*.patch
 /dist/
 /results/
+!tests/
+!tests/*.py

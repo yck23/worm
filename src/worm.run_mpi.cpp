@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <alps/mc/mpiadapter.hpp>
+#include <alps/utilities/mpi_vector.hpp>
 
 int main(int argc, char** argv) {
     alps::mpi::environment env(argc, argv);
@@ -41,6 +42,8 @@ int main(int argc, char** argv) {
 
         alps::mcmpiadapter<worm> sim(parameters, comm);
 
+        worm::check_restore_arguments(parameters, argc, argv);
+
         // Checkpoint file names
         std::string checkpoint_file = parameters["checkpoint"].as<std::string>();
         if (!is_master) checkpoint_file += "." + std::to_string(rank);
@@ -64,6 +67,13 @@ int main(int argc, char** argv) {
         else {
             sim.initialize();
         }
+
+        // A shared filename can change while ranks initialize, and rank-local
+        // checkpoints can be mixed accidentally. Never aggregate different maps.
+        std::vector<double> reference_map = sim.get_onsite_potential();
+        alps::mpi::broadcast(comm, reference_map, 0);
+        if (reference_map != sim.get_onsite_potential())
+            throw std::runtime_error("MPI ranks resolved different on-site potentials.");
 
         if (is_master) {
             std::cout << std::endl << "# Simulation parameters:" << std::endl;
@@ -124,6 +134,7 @@ int main(int argc, char** argv) {
                 std::cout << "# Saving results to " << output_file << std::endl;
                 alps::hdf5::archive ar(output_file, "w");
                 ar["/parameters"] << parameters;
+                sim.save_hamiltonian(ar, "/hamiltonian");
                 if (has_measurements) ar["/simulation/results"] << results;
                 std::cout << "# Finished successfully.\n";
             }

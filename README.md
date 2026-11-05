@@ -16,9 +16,11 @@ fork's verified Windows/MinGW build and the Rb-87 calculations, start with:
 
   * [BASIC_RUN_GUIDE.md](BASIC_RUN_GUIDE.md) first: three commands to run and read a supplied 4 x 4 example in about a minute, then optional parameter editing and restarts;
   * [GRAND_CANONICAL_RUN_GUIDE.md](GRAND_CANONICAL_RUN_GUIDE.md) for the same short example followed by larger Rb-87 runs with mu fixed and N measured;
+  * [Automatic chemical-potential tuning](GRAND_CANONICAL_RUN_GUIDE.md#automatically-find-mu-for-a-target-particle-number) to find mu for a chosen mean N from an existing parameter file;
   * [COMPLETE_BKT_GUIDE.md](COMPLETE_BKT_GUIDE.md) for the physics, path integral, implementation, BKT analysis, and the fixed-N reference run;
   * [results/README.md](results/README.md) for the committed clean-system density-matrix, winding and susceptibility analysis and its input results;
-  * [RB87_BKT_AUDIT.md](RB87_BKT_AUDIT.md) for numerical evidence and limitations; and
+  * [RB87_BKT_AUDIT.md](RB87_BKT_AUDIT.md) for numerical evidence and limitations;
+  * [docs/programmable_potentials.md](docs/programmable_potentials.md) for arbitrary static site potentials and speckle with numerical correlation length and disorder-strength controls; and
   * [WINDOWS_BUILD.md](WINDOWS_BUILD.md) for the pinned ALPSCore dependency and reproducible build.
 
 The packaged Windows executables, their locally installed ALPSCore, and the
@@ -26,6 +28,22 @@ grand-canonical finite-size workflow were independently re-audited on
 2 October 2026. Editing a parameter file does not require a rebuild. The audit
 supports the number, energy and winding workflow; it does not certify a
 precision BKT temperature or the known defective on-site Density_Matrix estimator.
+
+Clean and disorder datasets on this desktop
+------------------------------------------
+
+The merged checkout is `C:/Users/kuo/projects/worm`. Existing clean data remain in
+`results/clean_Rb87`, `results/cleanRbRDM` and `results/response_measurements`.
+Completed disorder sweeps are copied into the separate `results/disorder_*`
+folders. Their ALFS1 originals are retained. The comparison notebooks are
+[disorder_beta035_beta060.ipynb](notebooks/disorder_beta035_beta060.ipynb) and
+[disorder_temperature_comparison.ipynb](notebooks/disorder_temperature_comparison.ipynb).
+
+The notebooks, source, sweep configurations and selected clean results are in Git.
+Most HDF5 data and all `results/disorder_*` data are ignored by Git; a clone alone
+does not contain them. Historical sweep metadata may retain original ALFS1 paths.
+The existing clean runtime and copied programmable-potential runtime are retained;
+merged source changes require a fresh build when a combined executable is needed.
 
 Structure
 ---------

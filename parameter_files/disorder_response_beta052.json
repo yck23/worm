@@ -1,0 +1,67 @@
+{
+  "beta": 0.52,
+  "sizes": [
+    32,
+    64,
+    128
+  ],
+  "particles": {
+    "32": 1875,
+    "64": 7500,
+    "128": 30000
+  },
+  "strengths": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "correlation_length": 2,
+  "realizations": 8,
+  "workers": 16,
+  "thermalization": 50000,
+  "sweeps": 1000000000,
+  "runtime_seconds": {
+    "32": 1800,
+    "64": 3600,
+    "128": 18000
+  },
+  "base_disorder_seed": 202610260,
+  "base_mc_seed": 102610580,
+  "reference": {
+    "git_ref": "origin/main",
+    "commit": "1089533",
+    "notebook": "results/cleanRbRDM/density_matrix_comparison.ipynb",
+    "parameters": "results/cleanRbRDM/l128t035/parameters.ini",
+    "particle_numbers": "results/cleanRbRDM/analysis/susceptibility_productions.csv"
+  },
+  "parameters": {
+    "model": "\"BoseHubbard\"",
+    "Lz": "1",
+    "pbcx": "1",
+    "pbcy": "1",
+    "pbcz": "0",
+    "t_hop": "1",
+    "U_on": "0.152",
+    "V_nn": "0",
+    "mu": "-3.47",
+    "nmax": "5",
+    "canonical_window": "0.5",
+    "initial_occupancy": "2",
+    "E_off": "1",
+    "C_worm": "2",
+    "dtol_scale": "1",
+    "Nmeasure": "1",
+    "Nmeasure2": "100",
+    "Ntest": "1000000",
+    "Nsave": "100000000",
+    "p_insertworm": "1",
+    "p_moveworm": "0.4",
+    "p_insertkink": "0.3",
+    "p_deletekink": "0.2",
+    "p_glueworm": "0.1"
+  },
+  "data_subdirectory": "data",
+  "purpose": "Queued beta=0.52 sweep after beta=0.60 finishes; same canonical populations and disorder fields, fresh MC streams.",
+  "refresh_paired_notebook": true
+}

@@ -1,4 +1,5 @@
 #include "worm.hpp"
+#include "onsite_potential.hpp"
 
 #include <alps/params/convenience_params.hpp>
 #include <algorithm>
@@ -195,6 +196,8 @@ worm::worm(parameters_type const & parameters, std::size_t seed_offset) : alps::
   }
 
 
+  initialize_hamiltonian();
+
 #ifdef CAN_WINDOW
   if (canonical < 0)
     throw std::runtime_error("canonical value cannot be negative when CAN_WINDOW flag is set.");
@@ -224,11 +227,13 @@ worm::worm(parameters_type const & parameters, std::size_t seed_offset) : alps::
     << alps::accumulators::LogBinningAccumulator<double >("Number_of_particles")
     << alps::accumulators::LogBinningAccumulator<double >("Number_of_particles_squared")
     << alps::accumulators::LogBinningAccumulator<vector<double> >("Density_Distribution")
+    << alps::accumulators::LogBinningAccumulator<vector<double> >("Winding_number_squared")
+    << alps::accumulators::LogBinningAccumulator<double>("Winding_number_squared_total")
+    << alps::accumulators::LogBinningAccumulator<double>("Equal_time_susceptibility")
 #ifdef UNISYS
     << alps::accumulators::LogBinningAccumulator<vector<double> >("Density_Matrix")
     //<< alps::accumulators::LogBinningAccumulator<vector<double> >("Density_Matrix2")
     << alps::accumulators::LogBinningAccumulator<vector<double> >("DensDens_CorrFun")
-    << alps::accumulators::LogBinningAccumulator<vector<double> >("Winding_number_squared")
 #ifdef MATSUBARA_MEAS
     << alps::accumulators::LogBinningAccumulator<vector<double> >("Greenfun_k_omega_re")
     << alps::accumulators::LogBinningAccumulator<vector<double> >("Greenfun_k_omega_im")
@@ -298,6 +303,73 @@ worm::worm(parameters_type const & parameters, std::size_t seed_offset) : alps::
 
 
 
+bool worm::fully_periodic() const {
+  return parameters["pbcx"].as<bool>() &&
+    (latt_dim < 2 || parameters["pbcy"].as<bool>()) &&
+    (latt_dim < 3 || parameters["pbcz"].as<bool>());
+}
+
+void worm::check_restore_arguments(parameters_type const& params, int argc, char** argv) {
+  if (!params.is_restored()) return;
+  // ALPS ignores ordinary CLI overrides during restore. Fail explicitly so an
+  // apparent change to a potential cannot silently continue an old Hamiltonian.
+  for (int i = 1; i < argc; ++i) {
+    std::string arg(argv[i]);
+    while (!arg.empty() && arg[0] == '-') arg.erase(0, 1);
+    const std::string key = arg.substr(0, arg.find('='));
+    if (key == "onsite_potential_file" || key == "onsite_potential_enabled")
+      throw std::runtime_error("Do not override " + key + " on restore: the checkpoint contains the resolved map. Start a fresh run to change the Hamiltonian.");
+  }
+}
+
+void worm::initialize_hamiltonian() {
+  // Older checkpoints predate the switch and retain their enabled behavior.
+  onsite_potential_enabled = parameters.exists("onsite_potential_enabled")
+    ? parameters["onsite_potential_enabled"].as<bool>() : true;
+  onsite_potential_source = parameters.exists("onsite_potential_file")
+    ? parameters["onsite_potential_file"].as<std::string>() : "";
+  onsite_potential.assign(static_cast<std::size_t>(Nsites), 0.);
+  if (onsite_potential_enabled && !onsite_potential_source.empty()) {
+    if (ModelClassifierName != "BoseHubbard")
+      throw std::runtime_error("onsite_potential_file is supported only for model=BoseHubbard.");
+#ifdef UNISYS
+    throw std::runtime_error("onsite_potential_file requires PROGRAMMABLE_POTENTIAL=ON (or UNIFORM=OFF).");
+#endif
+  }
+#ifndef UNISYS
+  const std::size_t nbonds = MyLatt->get_Nbonds();
+  const std::size_t nsites = static_cast<std::size_t>(Nsites);
+  std::vector<std::size_t> dims;
+  std::vector<double> values;
+  const auto append = [&](const char* name, std::size_t count) {
+    if (!parameters.exists(name))
+      throw std::runtime_error(std::string("Missing Hamiltonian parameter ") + name + "; legacy nonuniform checkpoints are not supported.");
+    const double value = parameters[name].as<double>();
+    if (!std::isfinite(value)) throw std::runtime_error(std::string(name) + " must be finite.");
+    if ((std::string(name) == "t_hop" || std::string(name) == "Jpm") && value < 0.)
+      throw std::runtime_error(std::string(name) + " must be non-negative for this sign-positive solver.");
+    dims.push_back(count);
+    values.insert(values.end(), count, value);
+  };
+  if (ModelClassifierName == "BoseHubbard") {
+    append("t_hop", nbonds);
+    append("U_on", nsites);
+    append("mu", nsites);
+    append("V_nn", nbonds);
+  }
+  else {
+    append("Jpm", nbonds);
+    append("Jzz", nbonds);
+    append("h", nsites);
+  }
+  MyModel->user_set_params(values, dims);
+  // Restarts get their immutable map from checkpoint/hamiltonian instead.
+  if (!parameters.is_restored() && onsite_potential_enabled && !onsite_potential_source.empty())
+    onsite_potential = worm_potential::read_dense(onsite_potential_source, nsites);
+  MyModel->set_onsite_potential(onsite_potential);
+#endif
+}
+
 void worm::initialize_update_prob() {
   initialize_update_prob(insertworm, moveworm);
   initialize_update_prob(moveworm, update_count);
@@ -350,36 +422,7 @@ void worm::initialize() {
   nrvertex = 0;
   Epot_measure = 0;
 
-#ifndef UNISYS
-  // The user must set the parameters of the Hamiltonian
-  // The user can change the code below (eg, read from a user specified file)
-  std::size_t Nbonds = MyLatt->get_Nbonds();
-  std::size_t Ns = static_cast<std::size_t>(Nsites);
-  if (ModelClassifierName == "BoseHubbard") {
-    double t_ = 1;
-    double U_ = 4;
-    double chempot_ = 0.7;
-    double V_ = 0;
-    std::vector<std::size_t> dims{Nbonds, Ns, Ns, Nbonds};
-    std::vector<double> val;
-    for (size_t i=0; i < dims[0]; i++) val.push_back(t_);
-    for (size_t i=0; i < dims[1]; i++) val.push_back(U_);
-    for (size_t i=0; i < dims[2]; i++) val.push_back(chempot_);
-    for (size_t i=0; i < dims[3]; i++) val.push_back(V_);
-    MyModel->user_set_params(val, dims);
-  }
-  else {
-    double hmag = 0;
-    double J_ = 1.;
-    double Jz = 1.; 
-    std::vector<std::size_t> dims{Nbonds, Nbonds, Ns};
-    std::vector<double> val;
-    for (size_t i=0; i < dims[0]; i++) val.push_back(J_);
-    for (size_t i=0; i < dims[1]; i++) val.push_back(Jz);
-    for (size_t i=0; i < dims[2]; i++) val.push_back(hmag);
-    MyModel->user_set_params(val, dims);
-  }
-#endif
+
 
 
 #ifdef CAN_WINDOW
@@ -467,6 +510,7 @@ void worm::measure() {
   if (sweeps < thermalization_sweeps) return;
   if (sweeps == thermalization_sweeps) {
     if (Nresponse_measure > 0) reset_response_statistics();
+    hist_susceptibility_offsite = 0.;
 #ifdef UNISYS
     for (size_t i=0; i < hist_densmat.size(); i++) hist_densmat[i] = 0;
 #ifdef MATSUBARA_MEAS
@@ -499,9 +543,12 @@ void worm::measure() {
     measurements["Total_Energy"] << Epot_measure + Ek;
     measurements["Number_of_particles"] << number_of_particles * 1.;
     measurements["Number_of_particles_squared"] << number_of_particles * number_of_particles * 1.;
-#ifdef UNISYS
-    measurements["Winding_number_squared"] << wsq;
-#endif
+    if (fully_periodic()) {
+      measurements["Winding_number_squared"] << wsq;
+      double total_wsq = 0.;
+      for (double component : wsq) total_wsq += component;
+      measurements["Winding_number_squared_total"] << total_wsq;
+    }
   }
     
   if(counter[counter_tag::MEASURE2] >= Nmeasure2) {
@@ -542,11 +589,14 @@ void worm::force_reset_statistics() {
   reset(measurements["Number_of_particles_squared"]);
   reset(measurements["Density_Distribution"]);
   if (Nresponse_measure > 0) reset_response_statistics();
+  reset(measurements["Winding_number_squared"]);
+  reset(measurements["Winding_number_squared_total"]);
+  reset(measurements["Equal_time_susceptibility"]);
+  hist_susceptibility_offsite = 0.;
 #ifdef UNISYS
   reset(measurements["Density_Matrix"]);
   //reset(measurements["Density_Matrix2"]);
   reset(measurements["DensDens_CorrFun"]);
-  reset(measurements["Winding_number_squared"]);
 #ifdef MATSUBARA_MEAS
   reset(measurements["Greenfun_k_omega_re"]);
   reset(measurements["Greenfun_k_omega_im"]);
@@ -634,6 +684,21 @@ static void fft2d(std::vector<std::complex<double>>& data, size_t Lx, size_t Ly)
 #endif
 
 void worm::measure_corrfun() {
+  // Local occupations remain meaningful without translation symmetry or PBC.
+  vector<double> dens_distr(Nsites);
+  for (SiteIndex i = 0; i < Nsites; ++i)
+    dens_distr[i] = MyModel->stateval(dummy_it[i]->before());
+  measurements["Density_Distribution"] << dens_distr;
+  // chi_s = (1/Nsites) sum_ij <b_i^dagger b_j>. Endpoint coincidences
+  // use the physical density, avoiding the legacy on-site worm estimator.
+  // Summing over all worm origins is valid also for a fixed nonuniform map.
+  if (LATTICE::n_basis == 1 && fully_periodic() && ModelClassifierName == "BoseHubbard") {
+    double density = 0.;
+    for (double occupation : dens_distr) density += occupation / Nsites;
+    measurements["Equal_time_susceptibility"]
+        << hist_susceptibility_offsite * hist_dm_fac / Nmeasure2 + density;
+  }
+  hist_susceptibility_offsite = 0.;
 #ifdef UNISYS
   //Corrfun is only measured for periodic boundary conditions
   if (LATTICE::n_basis > 1) return;
@@ -641,13 +706,11 @@ void worm::measure_corrfun() {
   if (LATTICE::dim > 1 && !parameters["pbcy"]) return;
   if (LATTICE::dim > 2 && !parameters["pbcz"]) return;
   vector<double> hist_dd(hist_densmat.size(), 0.);
-  vector<double> dens_distr(Nsites);
   for (auto i=0; i < Nsites; i++) {
     size_t dist = MyLatt->relNumbering(0,i);
     if (hist_dd[dist] == 0) {
         hist_dd[dist] = state_eval[dummy_it[0]->before()] * state_eval[dummy_it[i]->before()];
     }
-   dens_distr[i] = state_eval[dummy_it[i]->before()];
   }
 
   vector<double> hist_dm(hist_densmat.size());
@@ -657,7 +720,6 @@ void worm::measure_corrfun() {
     hist_dm[i] = hist_densmat[i] * hist_dm_fac / Nmeasure2;
   }
  
-  measurements["Density_Distribution"] << dens_distr;
   measurements["Density_Matrix"] << hist_dm;
   //measurements["Density_Matrix2"] << hist_dm2;
   measurements["DensDens_CorrFun"] << hist_dd;
@@ -760,6 +822,9 @@ void worm::measure_response() {
 }
 
 void worm::measure_density_matrix() {
+  if (LATTICE::n_basis == 1 && fully_periodic() && ModelClassifierName == "BoseHubbard"
+      && worm_head_it->link() != worm_tail_it->link())
+    hist_susceptibility_offsite += 1. / C_worm;
 #ifdef UNISYS
   if (LATTICE::n_basis > 1) return;
   if (!parameters["pbcx"]) return;
@@ -1111,7 +1176,7 @@ double worm::calc_potential_energy_measure(bool with_chem_pot)
     int n = dummy_it[j]->before();
     
 #ifdef UNISYS
-    En += site_weight_diag[n];
+    En += with_chem_pot ? site_weight_diag[n] : MyModel->site_weight_diag(j, n, false);
     for (size_t const& iz : zc[j]) {
       En += 0.5 * bond_weight_diag[n][dummy_it[nb[j][iz]]->before()];
     }

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "flags": [
+    {
+      "beta": 0.6,
+      "L": 128,
+      "V": 9,
+      "status": "equilibration_unverified",
+      "note": "The original 50,000-excursion warmup has not been validated. A separate continuation audit adds 200,000 discarded excursions and two fresh 200,000-excursion measurement windows for all eight maps; absence of drift alone is not proof of equilibration.",
+      "audit": "results/disorder_beta060_20261027/equilibration/L128_V9_20261102/audit.json"
+    }
+  ]
+}

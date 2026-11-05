@@ -12,6 +12,14 @@ The immediate target is a homogeneous, periodic, two-dimensional Bose gas repres
 
 For larger chemical-potential-controlled runs, use the copy-and-edit parameter-file procedure in [GRAND_CANONICAL_RUN_GUIDE.md, Section 8](GRAND_CANONICAL_RUN_GUIDE.md#8-run-one-editable-parameter-file). For the fixed-particle-number 64 x 64 reference, use Section 9 below. The numerical evidence is tabulated in [RB87_BKT_AUDIT.md](RB87_BKT_AUDIT.md), and the reproducible compiler/dependency details are in [WINDOWS_BUILD.md](WINDOWS_BUILD.md).
 
+For **programmable site potentials with fixed N**, see the
+[canonical speckle, uniform, and off examples](docs/programmable_potentials.md#fixed-n-example-speckle-uniform-or-off).
+Use `canonical = N` with `-Canonical` in `run_bose_square.ps1`; select the map
+with `-PotentialFile`, or disable it with `-DisablePotential`. The `.dat` values
+choose the spatial profile, while the INI chooses N. The homogeneous reference
+workflow below uses the uniform package; its `run_rb87_bkt64.ps1` runner does
+not select programmable potentials. All supported maps are static during a run.
+
 ## 0. Orientation: what is fixed and what is measured
 
 The independently replicated 64 x 64 reference workflow does **not** ask the simulation to find a density from a chemical potential. It uses the canonical MPI executable, so the user chooses the exact total particle number before the run. A separate mu-controlled path is described in [GRAND_CANONICAL_RUN_GUIDE.md](GRAND_CANONICAL_RUN_GUIDE.md). That path has passed independent-start and response tests at smaller audited sizes, while a 64 x 64 grand-canonical result still requires its own long convergence campaign.

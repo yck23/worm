@@ -10,6 +10,14 @@
 
 .EXAMPLE
     .\scripts\run_bose_square.ps1 -Processes 4 -ParameterFile .\my_parameters.ini
+
+.EXAMPLE
+    .\scripts\run_bose_square.ps1 -Lx 32 -Ly 32 -PotentialFile .\potentials\speckle.dat
+    # -PotentialFile automatically selects the programmable-potential package.
+
+.EXAMPLE
+    .\scripts\run_bose_square.ps1 -Canonical -ProgrammablePotential -DisablePotential -Lx 32 -Ly 32 -ParameterFile .\parameter_files\BoseHubbard_speckle_canonical.ini
+    # A fresh fixed-N run with zero added site potential, keeping the INI map path.
 #>
 [CmdletBinding()]
 param(
@@ -22,14 +30,20 @@ param(
     [string]$ParameterFile,
     [string]$JobName,
     [string]$OutputDirectory,
-    [switch]$Canonical
+    [switch]$Canonical,
+    [switch]$ProgrammablePotential,
+    [switch]$DisablePotential,
+    [string]$PotentialFile
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$packageDir = Join-Path $repoRoot 'dist\windows-square'
+# Supplying a potential file also selects the build that can load it.
+if ($PotentialFile) { $ProgrammablePotential = $true }
+$packageName = if ($ProgrammablePotential) { 'windows-square-programmable' } else { 'windows-square' }
+$packageDir = Join-Path $repoRoot "dist\$packageName"
 $serialExe = Join-Path $packageDir 'qmc_worm.exe'
 $mpiExe = Join-Path $packageDir 'qmc_worm_mpi.exe'
 if ($Canonical) {
@@ -41,11 +55,16 @@ $mpiExec = 'C:\Program Files\Microsoft MPI\Bin\mpiexec.exe'
 if (-not $ParameterFile) { $ParameterFile = Join-Path $packageDir 'BoseHubbard.ini' }
 if (-not $OutputDirectory) { $OutputDirectory = Join-Path $repoRoot 'results' }
 if (-not $JobName) { $JobName = 'bose_square_{0}x{1}_{2}' -f $Lx, $Ly, (Get-Date -Format 'yyyyMMdd_HHmmss') }
-$ParameterFile = [IO.Path]::GetFullPath($ParameterFile)
-$OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
+$ParameterFile = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ParameterFile)
+$OutputDirectory = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputDirectory)
+if ($PotentialFile) {
+    $PotentialFile = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($PotentialFile)
+    # The solver checks file existence only when enabled, honoring either
+    # the INI flag or -DisablePotential without requiring an unused file.
+}
 
 foreach ($required in @($serialExe, $ParameterFile)) {
-    if (-not (Test-Path $required)) { throw "Required file not found: $required. Run scripts\build_windows.ps1 first." }
+    if (-not (Test-Path $required)) { throw "Required file not found: $required. Run scripts\build_windows.ps1 with the matching -ProgrammablePotential option first." }
 }
 if ($Processes -gt 1 -and -not (Test-Path $mpiExec)) { throw "Microsoft MPI launcher not found: $mpiExec" }
 if ($Processes -gt 1 -and -not (Test-Path $mpiExe)) { throw "MPI executable not found: $mpiExe" }
@@ -67,7 +86,10 @@ $simulationArgs = @(
     "--checkpoint=$JobName.clone.h5"
 )
 
-Write-Host "Running ${JobName}: ${Lx}x${Ly}, $Processes process(es), $Sweeps sweeps, canonical=$Canonical."
+if ($PotentialFile) { $simulationArgs += "--onsite_potential_file=$PotentialFile" }
+if ($DisablePotential) { $simulationArgs += "--onsite_potential_enabled=0" }
+
+Write-Host "Running ${JobName}: ${Lx}x${Ly}, $Processes process(es), $Sweeps sweeps, canonical=$Canonical, programmable=$ProgrammablePotential, disablePotential=$DisablePotential."
 $simulationExit = $null
 Push-Location -LiteralPath $OutputDirectory
 try {
