@@ -160,7 +160,7 @@ def write_csv(path,rows,fields):
     temporary.replace(path)
 
 
-def analyze(scan):
+def _analyze_local(scan):
     scan=Path(scan).resolve()
     root=scan.parent
     state=json.loads(scan.read_text())
@@ -183,6 +183,23 @@ def analyze(scan):
                 weighting='equal realization means; SE = sample SD / sqrt(R); MC noise already included',
                 incomplete_points=[p['id'] for p in state['points'] if p['status']!='completed']))
     print(f'Analysis refreshed: {len(means)}/{len(state["points"])} points',flush=True)
+
+
+def analyze(scan):
+    # The standalone beta dataset may also be a root in the paired exporter.
+    # Serialize its local table/notebook writes with other exporters, then
+    # release before spawning the paired exporter (which takes the same lock).
+    from disorder_analysis_lock import AnalysisLock
+    scan=Path(scan).resolve()
+    lock=AnalysisLock(REPO/'results/.disorder_analysis.lock').acquire()
+    try:
+        _analyze_local(scan)
+    finally:
+        lock.release()
+    root=scan.parent
+    out=root/'analysis'
+    out.mkdir(exist_ok=True)
+    state=json.loads(scan.read_text())
     if state['config'].get('refresh_paired_notebook', False):
         try:
             with (root/'paired_notebook_refresh.log').open('a',encoding='utf-8') as log:

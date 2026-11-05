@@ -1,5 +1,6 @@
 """Exercise dependency ordering and failure handling without running QMC."""
 import json
+import hashlib
 from pathlib import Path
 import sys
 import tempfile
@@ -120,6 +121,89 @@ class QueueTests(unittest.TestCase):
         with mock.patch.object(queue,'execute_stage') as execute:
             self.assertEqual(queue.run(self.path),1)
             execute.assert_not_called()
+
+    def test_missing_production_recovered_before_stages(self):
+        self.save(self.dependency,dict(status='failed',controller_pid=999,points=[dict(status='failed')]))
+        state=queue.read(self.path);state['dependency_recovery']=dict(runtime_seconds=43200,workers=2)
+        self.save(self.path,state)
+        def recover(path,options):
+            self.assertEqual(path,self.dependency)
+            self.assertEqual(options['runtime_seconds'],43200)
+            self.complete_dependency()
+            return 0
+        def execute(scan):
+            self.assertEqual(queue.read(self.dependency)['status'],'completed')
+            self.save(scan,dict(status='completed',points=[]))
+            return 0
+        with mock.patch.object(queue,'process_alive',return_value=False), \
+             mock.patch.object(queue,'recover_dependency',side_effect=recover) as recovery, \
+             mock.patch.object(queue,'execute_stage',side_effect=execute):
+            self.assertEqual(queue.run(self.path),0)
+            self.assertEqual(recovery.call_count,1)
+        self.assertTrue(queue.read(self.path)['recovery_attempted'])
+
+    def test_recovery_waits_for_old_controller_exit(self):
+        self.save(self.dependency,dict(status='failed',controller_pid=999,points=[]))
+        state=queue.read(self.path);state['dependency_recovery']=dict(runtime_seconds=43200,workers=2)
+        self.save(self.path,state)
+        def recover(path,options):
+            self.complete_dependency();return 0
+        def execute(scan):
+            self.save(scan,dict(status='completed',points=[]));return 0
+        with mock.patch.object(queue,'process_alive',side_effect=[True,False]), \
+             mock.patch.object(queue.time,'sleep') as sleep, \
+             mock.patch.object(queue,'recover_dependency',side_effect=recover), \
+             mock.patch.object(queue,'execute_stage',side_effect=execute):
+            self.assertEqual(queue.run(self.path),0)
+            self.assertEqual(sleep.call_count,1)
+
+    def test_recovery_failure_stops_following_stages(self):
+        self.save(self.dependency,dict(status='failed',controller_pid=999,points=[]))
+        state=queue.read(self.path);state['dependency_recovery']=dict(runtime_seconds=43200,workers=2)
+        self.save(self.path,state)
+        with mock.patch.object(queue,'process_alive',return_value=False), \
+             mock.patch.object(queue,'recover_dependency',return_value=1) as recovery, \
+             mock.patch.object(queue,'execute_stage') as execute:
+            self.assertEqual(queue.run(self.path),1)
+            self.assertEqual(recovery.call_count,1)
+            execute.assert_not_called()
+
+    def test_recovery_attempt_not_repeated(self):
+        self.save(self.dependency,dict(status='failed',controller_pid=999,points=[]))
+        state=queue.read(self.path);state['dependency_recovery']=dict(runtime_seconds=43200,workers=2)
+        self.save(self.path,state)
+        with mock.patch.object(queue,'process_alive',return_value=False), \
+             mock.patch.object(queue,'recover_dependency',return_value=0) as recovery, \
+             mock.patch.object(queue,'execute_stage') as execute:
+            self.assertEqual(queue.run(self.path),1)
+            self.assertEqual(recovery.call_count,1)
+            execute.assert_not_called()
+
+    def test_prepare_recovery_accepts_failed_scan(self):
+        self.save(self.dependency,dict(kind='disorder_response_scan',status='failed',points=[]))
+        exe=self.root/'solver.exe';exe.write_bytes(b'fixture')
+        for beta,scan in zip([.52,.39],self.scans):
+            self.save(scan,dict(status='prepared',executable=str(exe),
+                executable_sha256=hashlib.sha256(exe.read_bytes()).hexdigest(),config=dict(beta=beta)))
+        target=self.root/'recovery/queue.json'
+        queue.prepare(target,self.dependency,self.scans,recover_missing_dependency=True)
+        state=queue.read(target)
+        self.assertEqual(state['dependency_recovery']['runtime_seconds'],43200)
+        self.assertEqual([s['beta'] for s in state['stages']],[.52,.39])
+
+    def test_successor_waits_while_parent_recovers(self):
+        self.save(self.dependency,dict(kind='disorder_scan_queue',status='recovering_dependency',
+            controller_pid=123,stages=[dict(status='queued')]))
+        def sleep(seconds):
+            self.save(self.dependency,dict(kind='disorder_scan_queue',status='completed',
+                stages=[dict(status='completed')]))
+        def execute(scan):
+            self.save(scan,dict(status='completed',points=[]));return 0
+        with mock.patch.object(queue,'process_alive',return_value=True), \
+             mock.patch.object(queue.time,'sleep',side_effect=sleep) as wait, \
+             mock.patch.object(queue,'execute_stage',side_effect=execute):
+            self.assertEqual(queue.run(self.path),0)
+            self.assertEqual(wait.call_count,1)
 
     def test_exclusive_lock_preserves_active_queue(self):
         self.path.with_suffix('.lock').write_text('9999')

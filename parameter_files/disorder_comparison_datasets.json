@@ -16,6 +16,10 @@
     {
       "beta": 0.52,
       "directory": "results/disorder_beta052_20261028"
+    },
+    {
+      "beta": 0.39,
+      "directory": "results/disorder_beta039_20261031"
     }
   ]
 }

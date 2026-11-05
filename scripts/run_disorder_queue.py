@@ -72,7 +72,8 @@ def process_alive(pid):
         return True
 
 
-def prepare(queue_path, dependency, scans, poll_seconds=60):
+def prepare(queue_path, dependency, scans, poll_seconds=60,
+            recover_missing_dependency=False, recovery_seconds=43200, recovery_workers=2):
     queue_path = Path(queue_path).resolve()
     if queue_path.exists():
         raise ValueError('Queue already exists; use a new queue file for a new sequence')
@@ -80,8 +81,14 @@ def prepare(queue_path, dependency, scans, poll_seconds=60):
         raise ValueError('poll_seconds must be between 1 and 60')
     dependency = scan_reference(dependency)
     dependency_state = read(local_path(dependency))
-    if dependency_state['status'] not in ('prepared', 'waiting_for_dependency', 'running', 'completed'):
-        raise ValueError('Dependency must be prepared, waiting, running, or completed')
+    allowed=('prepared','waiting_for_dependency','recovering_dependency','running','completed')
+    if dependency_state['status'] not in allowed and not (recover_missing_dependency and dependency_state['status']=='failed'):
+        raise ValueError('Dependency must be prepared, waiting, running, completed, or recoverable failed')
+    if recover_missing_dependency:
+        if dependency_state.get('kind')!='disorder_response_scan':
+            raise ValueError('Checkpoint recovery requires a scan dependency')
+        if recovery_seconds <= 0 or recovery_workers <= 0:
+            raise ValueError('Recovery seconds and workers must be positive')
     stages = []
     for scan in scans:
         reference = scan_reference(scan)
@@ -100,6 +107,9 @@ def prepare(queue_path, dependency, scans, poll_seconds=60):
     state = dict(schema_version=1, kind='disorder_scan_queue', status='prepared',
                  created_utc=now(), dependency=dependency, poll_seconds=poll_seconds,
                  stages=stages)
+    if recover_missing_dependency:
+        state['dependency_recovery']=dict(runtime_seconds=recovery_seconds,workers=recovery_workers,
+            only_missing_measurements=True,max_attempts=1)
     _write_json(queue_path, state)
     shutil.copyfile(__file__, queue_path.parent / 'run_disorder_queue.py')
     print(f'Prepared {len(stages)} sequential scans: {queue_path}', flush=True)
@@ -113,6 +123,13 @@ def execute_stage(scan_path):
          (root/'controller.stderr.log').open('a', encoding='utf-8') as stderr:
         return subprocess.run(command, cwd=REPO, stdout=stdout, stderr=stderr,
                               creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0)).returncode
+
+
+def recover_dependency(scan_path, options):
+    from resume_disorder_response import prepare as prepare_continuation, run as run_continuation
+    prepare_continuation(scan_path, options['runtime_seconds'], options['workers'],
+                         only_missing_measurements=True)
+    return run_continuation(scan_path)
 
 
 def run(queue_path):
@@ -138,9 +155,24 @@ def run(queue_path):
                 if not all(p['status'] == 'completed' for p in entries):
                     raise RuntimeError('Dependency claims completion but has incomplete points or stages')
                 break
-            if dependency['status'] not in ('prepared', 'waiting_for_dependency', 'running'):
+            if dependency['status']=='failed' and state.get('dependency_recovery') and not state.get('recovery_attempted'):
+                # Final analysis may still be running after the failed scan is written.
+                # Wait for its controller to exit before copying any checkpoint.
+                if process_alive(dependency.get('controller_pid')):
+                    time.sleep(state['poll_seconds'])
+                    continue
+                state.update(status='recovering_dependency',recovery_attempted=True,recovery_started_utc=now())
+                _write_json(queue_path,state)
+                print(f'{now()} Continuing missing-production dependency chains from checkpoints',flush=True)
+                code=recover_dependency(local_path(state['dependency']),state['dependency_recovery'])
+                state.update(recovery_returncode=code,recovery_finished_utc=now(),status='waiting_for_dependency')
+                _write_json(queue_path,state)
+                if code:
+                    raise RuntimeError('Checkpoint recovery did not complete; inspect continuation logs')
+                continue
+            if dependency['status'] not in ('prepared', 'waiting_for_dependency', 'recovering_dependency', 'running'):
                 raise RuntimeError(f'Dependency stopped with status {dependency["status"]}')
-            if dependency['status'] in ('running', 'waiting_for_dependency'):
+            if dependency['status'] in ('running', 'waiting_for_dependency', 'recovering_dependency'):
                 absent_checks = 0 if process_alive(dependency.get('controller_pid')) else absent_checks + 1
                 if absent_checks >= 3:
                     raise RuntimeError('Dependency controller absent for three consecutive checks; inspect its logs')
@@ -201,11 +233,14 @@ def main():
     setup.add_argument('--after', type=Path, required=True)
     setup.add_argument('--scan', type=Path, action='append', required=True)
     setup.add_argument('--poll-seconds', type=int, default=60)
+    setup.add_argument('--recover-missing-dependency',action='store_true')
+    setup.add_argument('--recovery-seconds',type=int,default=43200)
+    setup.add_argument('--recovery-workers',type=int,default=2)
     for name in ('run', 'status'):
         commands.add_parser(name).add_argument('--queue', type=Path, required=True)
     args = parser.parse_args()
     if args.command == 'prepare':
-        prepare(args.queue, args.after, args.scan, args.poll_seconds)
+        prepare(args.queue, args.after, args.scan, args.poll_seconds, args.recover_missing_dependency, args.recovery_seconds, args.recovery_workers)
     elif args.command == 'run':
         return run(args.queue)
     else:

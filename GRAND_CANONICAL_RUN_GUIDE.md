@@ -634,3 +634,104 @@ Set-Location '\\alfs1.physics.ox.ac.uk\al\kuo\projects\worm'
 ~~~
 
 The exact build and ALPSCore layout are documented in [WINDOWS_BUILD.md](WINDOWS_BUILD.md).
+
+## Automatically find mu for a target particle number
+
+Run this from the repository root with Python 3.13 (numpy and h5py are required):
+
+~~~powershell
+py -3.13 .\scripts\tune_mu.py .\parameter_files\basic_bose_square.ini --target 16
+~~~
+
+The helper runs the existing serial grand-canonical executable, adjusts mu,
+and checks the selected value with fresh independent simulations. It prints
+the result and saves everything in a new timestamped directory under results.
+No rebuild is needed.
+
+For an existing fixed-number parameter file, replace the filename below.
+The target is read directly from its canonical = N setting:
+
+~~~powershell
+py -3.13 .\scripts\tune_mu.py .\parameter_files\Rb87_BKT_64.ini
+~~~
+
+The input file is never changed. Temperature, lattice, hopping, interactions,
+occupation cutoff and boundary conditions are retained. An enabled static
+potential is copied once and used for every trial; this automatically selects
+the programmable-potential executable. A disabled potential requires no map.
+If a relative map path cannot be resolved uniquely, supply
+--potential-file with its actual path.
+
+### Accuracy and run length
+
+The default absolute particle-number tolerance is max(0.1, 0.005 times N).
+For a tighter tolerance and longer sampling, for example:
+
+~~~powershell
+py -3.13 .\scripts\tune_mu.py .\parameter_files\basic_bose_square.ini --target 16 --number-tolerance 0.05 --seconds 30 --max-seconds 240
+~~~
+
+Each trial uses two independently seeded chains, initialized below and above
+the target. Each chain discards one burn-in call and retains three separate
+production calls, resetting statistics between them. At the default 10 seconds
+per call, a trial takes roughly 80 seconds plus startup/checkpoint overhead.
+The helper increases duration when the measurement is too noisy, starts
+disagree, or block means drift. Larger systems may need substantially longer
+burn-in: increase --seconds and/or --burn-in-blocks. The INI thermalization
+threshold is retained; --thermalization can override it.
+
+The search uses d<N>/dmu = beta Var(N), with bounded steps and a bracket
+established only from resolved residual signs. Within-block variances determine
+the response; disagreement between chains does not inflate it. Almost constant
+N or insufficient effective sampling cannot count as success.
+
+A candidate passes when the starts and early/late blocks agree and
+abs(<N> - target) + 2 SE_N is within the requested tolerance. It must then pass
+again with fresh seeds. This is a practical statistical diagnostic, not a proof
+of equilibration or a calibrated 95% confidence interval.
+
+Use --dry-run to inspect settings without running or writing, and --help for
+all options. --max-iterations (default 12) includes the confirmation trial.
+--sweeps sets the per-call sweep cap (default one billion); runs normally end
+at the wall-time limit. The source INI's sweep/time limits are overridden.
+Solver time checks occur between complete worm updates, so some overrun is
+possible. Chains run serially and use at most one simulation process at once.
+
+### Reading and reusing the result
+
+The output directory contains:
+
+- result.json: status, mu, approximate statistical standard error, confirmed
+  mean N, residual, input/executable hashes, settings and trial history;
+- history.csv: one row per tuning or confirmation trial;
+- tuned_parameters.ini: a reusable grand-canonical input, written only after
+  successful confirmation;
+- source.ini and, when used, potential.dat: the original input and copied map;
+- trial folders: generated inputs, seeds, discarded and retained HDF5 blocks,
+  checkpoints and solver logs.
+
+The reported mu_se is SE_N / (beta Var(N)), a local linear-response estimate.
+It does not include systematic equilibration errors or uncertainty in the
+response slope. The reported residual and mu_correction_estimate show the
+remaining target mismatch. mu uses the same energy convention as the input:
+H = H0 - mu N. No continuum energy-zero shift is applied.
+
+This finds the reservoir mu giving the requested **mean** total N. It does not
+turn a canonical run into a fluctuating one, and is not the exact finite-system
+canonical difference F(N+1)-F(N). A density plateau can prevent a unique precise
+estimate. Targets exactly at zero or sites times nmax are rejected because
+their finite-temperature grand-canonical means reach those limits only
+asymptotically.
+
+Exit code 0 means confirmed convergence, 2 means the sampling/trial budget was
+insufficient, and 1 means an input or solver failure. Incomplete runs retain
+their evidence and do not produce tuned_parameters.ini. Choose a new output
+directory for another attempt; the helper refuses to overwrite populated
+directories. A supplied --executable must be a compatible serial
+grand-canonical square-lattice build.
+
+Focused tests can be run with:
+
+~~~powershell
+py -3.13 -m unittest discover -s scripts -p test_tune_mu.py -v
+~~~

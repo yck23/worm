@@ -16,6 +16,7 @@ fork's verified Windows/MinGW build and the Rb-87 calculations, start with:
 
   * [BASIC_RUN_GUIDE.md](BASIC_RUN_GUIDE.md) first: three commands to run and read a supplied 4 x 4 example in about a minute, then optional parameter editing and restarts;
   * [GRAND_CANONICAL_RUN_GUIDE.md](GRAND_CANONICAL_RUN_GUIDE.md) for the same short example followed by larger Rb-87 runs with mu fixed and N measured;
+  * [Automatic chemical-potential tuning](GRAND_CANONICAL_RUN_GUIDE.md#automatically-find-mu-for-a-target-particle-number) to find mu for a chosen mean N from an existing parameter file;
   * [COMPLETE_BKT_GUIDE.md](COMPLETE_BKT_GUIDE.md) for the physics, path integral, implementation, BKT analysis, and the fixed-N reference run;
   * [RB87_BKT_AUDIT.md](RB87_BKT_AUDIT.md) for numerical evidence and limitations;
   * [docs/programmable_potentials.md](docs/programmable_potentials.md) for arbitrary static site potentials and speckle with numerical correlation length and disorder-strength controls; and

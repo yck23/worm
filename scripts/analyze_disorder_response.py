@@ -19,6 +19,17 @@ if __name__ == '__main__':
         _notebook_images.append(_base64.b64encode(buffer.getvalue()).decode())
         _plt.close(figure)
     _plt.show=_capture_figure
+    # Separate simulation controllers can finish points concurrently.
+    # Lock only the script exporter; ordinary notebook cells remain unchanged.
+    from pathlib import Path as _LockPath
+    import sys as _lock_sys
+    import atexit as _lock_atexit
+    _lock_repo=next(p for p in _LockPath(__file__).resolve().parents
+                   if (p/'results/disorder_beta035_20261026/scan.json').is_file())
+    _lock_sys.path.insert(0,str(_lock_repo/'scripts'))
+    from disorder_analysis_lock import AnalysisLock as _AnalysisLock
+    _export_lock=_AnalysisLock(_lock_repo/'results/.disorder_analysis.lock').acquire()
+    _lock_atexit.register(_export_lock.release)
 
 # %% Find the configured datasets
 from pathlib import Path
@@ -40,6 +51,8 @@ else:
              dict(beta=.60,directory='results/disorder_beta060_20261027')]
 roots={float(entry['beta']):repo/entry['directory'] for entry in entries}
 betas=list(roots)  # Keep beta=0.60 directly below beta=0.35; later betas follow.
+quality_file=repo/'parameter_files/disorder_quality_flags.json'
+quality_flags=json.loads(quality_file.read_text())['flags'] if quality_file.exists() else []
 sizes=[32,64,128]
 colours=['tab:green','tab:blue','tab:orange']
 plt.rcParams.update({'figure.figsize':(7,4.5),'figure.dpi':110})
@@ -122,9 +135,12 @@ for beta in betas:
     status=dict(beta=beta,completed_points=len(table),requested_points=len(points),
                 completed_runs=len(run_table),complete=not missing,incomplete_points=missing,
                 strengths=strengths,scan_status='completed' if not missing else 'incomplete')
+    status['quality_flags']=[q for q in quality_flags if q['beta']==beta]
     (out/'paired_analysis_status.json').write_text(json.dumps(status,indent=2)+'\n')
     status_by_beta[beta]=status
     titles[beta]=f'beta = {beta:.2f}'+(f' (partial: {len(table)}/{len(points)} points)' if missing else '')
+    if status['quality_flags']:
+        titles[beta]+='\nEquilibration unverified: '+', '.join(f"L={q['L']}, V/t={q['V']:g}" for q in status['quality_flags'])
     samples_by_beta[beta],means_by_beta[beta],errors_by_beta[beta]=samples,means,errors
     strengths_by_beta[beta],out_by_beta[beta]=strengths,out
     print(f'beta={beta:.2f}: {len(table)}/{len(points)} complete points; {len(run_table)} runs')
@@ -284,6 +300,9 @@ if __name__=='__main__':
     _all_complete=all(status_by_beta[b]['complete'] for b in betas)
     _completion=('**All registered sweeps are complete at every requested size and disorder strength.**'
         if _all_complete else 'Some registered sweeps are queued or incomplete. Their missing eight-realization points are listed below.')
+    _quality='\n'.join(f"- **PROVISIONAL: beta={q['beta']:.2f}, L={q['L']}, V/t={q['V']:g}.** {q['note']}" for q in quality_flags)
+    from disorder_equilibration_notebook import progress_markdown
+    _audit_progress=progress_markdown(repo)
     _intro=f'''# Disorder susceptibility and winding across inverse temperatures
 
 For every observable, the **beta=0.60 figure is directly below beta=0.35**.
@@ -293,6 +312,12 @@ Current collection status:
 {_status}
 
 {_completion}
+
+{_quality}
+
+{_audit_progress}
+
+**The extended-thermalisation progress table and per-map comparison plots for L=128, beta=0.60, disorder 9 are at the end of this notebook.**
 
 Every included point has all eight realizations. See `analysis/paired_analysis_status.json` for the saved counts.
 
@@ -325,6 +350,8 @@ The datasets and their tables remain separate; outputs go to each `analysis/` fo
                 _plot_index+=1
         _cells.append(dict(cell_type='code',metadata={},source=_code.splitlines(keepends=True),execution_count=_execution,outputs=_outputs))
     assert _plot_index==len(_notebook_images)==9*len(betas)
+    from disorder_equilibration_notebook import notebook_cells
+    _cells.extend(notebook_cells(repo))
     _notebook=dict(cells=_cells,metadata=dict(kernelspec=dict(display_name='Python 3',language='python',name='python3'),
         language_info=dict(name='python',version='3'),source_script='../../scripts/analyze_disorder_response.py'),nbformat=4,nbformat_minor=4)
     for _root in roots.values():
