@@ -257,3 +257,7 @@ The susceptibility section of `density_matrix_comparison.ipynb` now computes who
 The calculation reads the compact rank summaries in `../response_measurements/data/baseline_rank_observables.csv`, sums off-site contributions inside each rank, adds exact density, and count-weights the rank means. No custom functions or analysis-module imports are used. The direct result is checked against the actual final-production density matrix at every point.
 
 `analysis/susceptibility_final_with_errors.csv` records the 27 plotted means and errors, including their L^(7/4) scaling. The older `susceptibility_summary.csv` remains the historical pooled-three-production table; it is not the central value of the new error-bar plots. All errors remain conditional on independent, equilibrated rank streams. The separate `../response_measurements/response_measurements.ipynb` includes winding, rank/temporal errors and the new continuation histories.
+
+## Squared winding error bars
+
+The winding section in `density_matrix_comparison.ipynb` plots final-prod03 means of Wx^2, Wy^2 and their sum, each with +/- one whole-rank jackknife standard error. Winding measurement counts weight each rank; summing components before resampling preserves their covariance. These means replace the pooled-three-production means in the winding plots to match the error window. `analysis/winding_final_with_errors.csv` contains all 27 matching means and errors. The historical pooled CSV remains unchanged. Valid errors require independent, equilibrated rank streams.

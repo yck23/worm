@@ -4,6 +4,14 @@ This repository uses a pinned ALPSCore 2.3.3 commit and a small MinGW compatibil
 
 The executable package is already built on this desktop. To try the program immediately, use [BASIC_RUN_GUIDE.md](BASIC_RUN_GUIDE.md): it has three commands for a 4 x 4 example that finishes in about a minute. The build instructions below are for a missing package or source/dependency changes.
 
+## Relocated checkout on this desktop
+
+The inactive main checkout was copied to `C:/Users/kuo/projects/worm` on 3 November 2026, including its Git history, uncommitted edits and results. Run commands from this local checkout. The packaged executables can be used without rebuilding.
+
+Generated CMake build directories retain their old paths. Before rebuilding, use `scripts/build_windows.ps1`, which configures with `--fresh`; do not reuse an old generated Makefile directly. The response-measurement build command in its results README also uses `--fresh`.
+
+Historical logs, validation reports, backup notebooks and production provenance retain their original paths. Their corresponding files now live under `C:/Users/kuo/projects/worm`. Migration verification and originals of edited files are stored beside this checkout in `C:/Users/kuo/projects`.
+
 ## Prerequisites
 
 - CMake in `C:\Program Files\CMake`

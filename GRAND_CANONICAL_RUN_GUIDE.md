@@ -7,7 +7,7 @@ This is the guide to use when **chemical potential is fixed and particle number 
 In VS Code, open Terminal > New Terminal and select PowerShell. Paste these commands one at a time. Wait for each to finish. The executable and example INI are already supplied on this desktop.
 
 ~~~powershell
-Set-Location '\\alfs1.physics.ox.ac.uk\al\kuo\projects\worm'
+Set-Location 'C:/Users/kuo/projects/worm'
 ~~~
 
 ~~~powershell
@@ -248,7 +248,7 @@ The latest commit leaves the worm move code and the primary energy, number, and 
 Open PowerShell and enter:
 
 ~~~powershell
-Set-Location '\\alfs1.physics.ox.ac.uk\al\kuo\projects\worm'
+Set-Location 'C:/Users/kuo/projects/worm'
 ~~~
 
 The verified executable package already exists on this desktop. You do not need to activate a Python or ALPSCore environment to run it: the runner sets the DLL search path. If the package is missing, or you have changed the C++ source or dependency, build it once:
@@ -377,7 +377,7 @@ These values are deliberately separated. Agreement later demonstrates that the r
 The following command creates and runs a 32 x 32 fixed-mu grid. Twelve jobs times two MPI ranks use all 24 physical desktop cores:
 
 ~~~powershell
-Set-Location '\\alfs1.physics.ox.ac.uk\al\kuo\projects\worm'
+Set-Location 'C:/Users/kuo/projects/worm'
 .\scripts\run_gc_bkt_audit.ps1 -Mode Fresh -AuditName my_gc_L32 -Sizes 32 -Betas 0.24,0.27,0.29,0.32 -Mu -3.53 -ProcessesPerChain 2 -RuntimeLimit 600
 ~~~
 
@@ -629,7 +629,7 @@ The packaged binaries are already rebuilt against the verified ALPSCore installa
 Only after source or dependency changes:
 
 ~~~powershell
-Set-Location '\\alfs1.physics.ox.ac.uk\al\kuo\projects\worm'
+Set-Location 'C:/Users/kuo/projects/worm'
 .\scripts\build_windows.ps1 -Jobs 32
 ~~~
 

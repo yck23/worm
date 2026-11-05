@@ -717,7 +717,7 @@ This section is deliberately literal. Run the commands in a normal 64-bit PowerS
 ### 9.1 Open the repository
 
 ```powershell
-Set-Location "\\alfs1.physics.ox.ac.uk\al\kuo\projects\worm"
+Set-Location "C:/Users/kuo/projects/worm"
 ```
 
 The build and run scripts resolve their own absolute paths. No MSYS2 activation command is required: the build script names CMake and MSYS2 tools explicitly, and the run script prepends the packaged DLL directory. Microsoft MPI must already be installed because `mpiexec.exe` and `msmpi.dll` are host prerequisites.

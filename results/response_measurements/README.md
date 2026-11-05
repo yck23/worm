@@ -102,8 +102,8 @@ The simulator tests require the built executable. Nine integration groups passed
 The response executable was built separately from the packaged release using the installed ALPSCore and MSYS2 dependencies:
 
 ```powershell
-cmake -S V:/kuo/projects/worm/src -B V:/kuo/projects/worm/build-repro/worm-square-response -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DLATTICE=square -DCWINDOW=ON -DMATSUBARA=OFF -DALPSCore_DIR=V:/kuo/projects/worm/build-repro/alps-install/share/ALPSCore -DBOOST_ROOT=C:/msys64/ucrt64 -DHDF5_ROOT=C:/msys64/ucrt64 "-DCMAKE_CXX_FLAGS=-DALPS_UTILITY_NO_STACKTRACE -DALPS_NO_SIGNALS"
-cmake --build V:/kuo/projects/worm/build-repro/worm-square-response --parallel 8
+cmake --fresh -S C:/Users/kuo/projects/worm/src -B C:/Users/kuo/projects/worm/build-repro/worm-square-response -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DLATTICE=square -DCWINDOW=ON -DMATSUBARA=OFF -DALPSCore_DIR=C:/Users/kuo/projects/worm/build-repro/alps-install/share/ALPSCore -DBOOST_ROOT=C:/msys64/ucrt64 -DHDF5_ROOT=C:/msys64/ucrt64 "-DCMAKE_CXX_FLAGS=-DALPS_UTILITY_NO_STACKTRACE -DALPS_NO_SIGNALS"
+cmake --build C:/Users/kuo/projects/worm/build-repro/worm-square-response --parallel 8
 ```
 
 Adjust local dependency paths on another machine. Physics/measurement INI changes do not themselves require rebuilding. Source changes do. The collector currently targets Windows, Microsoft MPI and the repository's `dist/windows-square` DLLs.

@@ -11,7 +11,7 @@ Paste each command below into that terminal and press Enter. Wait for it to fini
 ## 2. Go to the project folder
 
 ~~~powershell
-Set-Location '\\alfs1.physics.ox.ac.uk\al\kuo\projects\worm'
+Set-Location 'C:/Users/kuo/projects/worm'
 ~~~
 
 Run all the following commands from this folder. You can leave VS Code's terminal here throughout the example.

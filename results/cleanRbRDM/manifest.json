@@ -6,7 +6,7 @@
   "block_seconds": 900,
   "production_blocks": 3,
   "initial_pilot_seconds": 180,
-  "executable": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\dist\\windows-square\\qmc_worm_canonical_mpi.exe",
+  "executable": "C:/Users/kuo/projects/worm\\dist\\windows-square\\qmc_worm_canonical_mpi.exe",
   "executable_sha256": "38c14a4ddf3a6b80cec13dd2c1de6348583093c6011f023f100d6b06fa852dbe",
   "independent_new_seeds": false,
   "provenance": "Continuation of copied rank 0..7 configurations and RNG states; new statistics.",
@@ -19,49 +19,49 @@
       "sources": [
         {
           "rank": 0,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t035\\Rb87_BKT_64.clone.h5",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t035\\Rb87_BKT_64.clone.h5",
           "size": 82967533,
           "mtime_ns": 1792056510588729600
         },
         {
           "rank": 1,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t035\\Rb87_BKT_64.clone.h5.1",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t035\\Rb87_BKT_64.clone.h5.1",
           "size": 78248605,
           "mtime_ns": 1792056507353751900
         },
         {
           "rank": 2,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t035\\Rb87_BKT_64.clone.h5.2",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t035\\Rb87_BKT_64.clone.h5.2",
           "size": 98434949,
           "mtime_ns": 1792056510619977200
         },
         {
           "rank": 3,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t035\\Rb87_BKT_64.clone.h5.3",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t035\\Rb87_BKT_64.clone.h5.3",
           "size": 78248629,
           "mtime_ns": 1792056508979370300
         },
         {
           "rank": 4,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t035\\Rb87_BKT_64.clone.h5.4",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t035\\Rb87_BKT_64.clone.h5.4",
           "size": 73529741,
           "mtime_ns": 1792056510541859200
         },
         {
           "rank": 5,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t035\\Rb87_BKT_64.clone.h5.5",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t035\\Rb87_BKT_64.clone.h5.5",
           "size": 78248669,
           "mtime_ns": 1792056511057493400
         },
         {
           "rank": 6,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t035\\Rb87_BKT_64.clone.h5.6",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t035\\Rb87_BKT_64.clone.h5.6",
           "size": 96468805,
           "mtime_ns": 1792056507510646800
         },
         {
           "rank": 7,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t035\\Rb87_BKT_64.clone.h5.7",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t035\\Rb87_BKT_64.clone.h5.7",
           "size": 103153821,
           "mtime_ns": 1792056509729370000
         }
@@ -82,49 +82,49 @@
       "sources": [
         {
           "rank": 0,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t039\\Rb87_BKT_64.clone.h5",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t039\\Rb87_BKT_64.clone.h5",
           "size": 187415330,
           "mtime_ns": 1792424175693034000
         },
         {
           "rank": 1,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t039\\Rb87_BKT_64.clone.h5.1",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t039\\Rb87_BKT_64.clone.h5.1",
           "size": 241944786,
           "mtime_ns": 1792424176789106200
         },
         {
           "rank": 2,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t039\\Rb87_BKT_64.clone.h5.2",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t039\\Rb87_BKT_64.clone.h5.2",
           "size": 162902790,
           "mtime_ns": 1792424175036782800
         },
         {
           "rank": 3,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t039\\Rb87_BKT_64.clone.h5.3",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t039\\Rb87_BKT_64.clone.h5.3",
           "size": 214681726,
           "mtime_ns": 1792424176195367400
         },
         {
           "rank": 4,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t039\\Rb87_BKT_64.clone.h5.4",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t039\\Rb87_BKT_64.clone.h5.4",
           "size": 157791370,
           "mtime_ns": 1792424175083678700
         },
         {
           "rank": 5,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t039\\Rb87_BKT_64.clone.h5.5",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t039\\Rb87_BKT_64.clone.h5.5",
           "size": 244304058,
           "mtime_ns": 1792424173593939400
         },
         {
           "rank": 6,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t039\\Rb87_BKT_64.clone.h5.6",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t039\\Rb87_BKT_64.clone.h5.6",
           "size": 192134346,
           "mtime_ns": 1792424177117216100
         },
         {
           "rank": 7,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t039\\Rb87_BKT_64.clone.h5.7",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t039\\Rb87_BKT_64.clone.h5.7",
           "size": 186628410,
           "mtime_ns": 1792424177164100200
         }
@@ -144,49 +144,49 @@
       "sources": [
         {
           "rank": 0,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t045\\Rb87_BKT_128.clone.h5",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t045\\Rb87_BKT_128.clone.h5",
           "size": 175424970,
           "mtime_ns": 1792382872807912400
         },
         {
           "rank": 1,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t045\\Rb87_BKT_128.clone.h5.1",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t045\\Rb87_BKT_128.clone.h5.1",
           "size": 202689570,
           "mtime_ns": 1792382874323649500
         },
         {
           "rank": 2,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t045\\Rb87_BKT_128.clone.h5.2",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t045\\Rb87_BKT_128.clone.h5.2",
           "size": 170704338,
           "mtime_ns": 1792382871119667100
         },
         {
           "rank": 3,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t045\\Rb87_BKT_128.clone.h5.3",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t045\\Rb87_BKT_128.clone.h5.3",
           "size": 113817206,
           "mtime_ns": 1792382873198512500
         },
         {
           "rank": 4,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t045\\Rb87_BKT_128.clone.h5.4",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t045\\Rb87_BKT_128.clone.h5.4",
           "size": 202683550,
           "mtime_ns": 1792382873761016400
         },
         {
           "rank": 5,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t045\\Rb87_BKT_128.clone.h5.5",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t045\\Rb87_BKT_128.clone.h5.5",
           "size": 165987178,
           "mtime_ns": 1792382874229883500
         },
         {
           "rank": 6,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t045\\Rb87_BKT_128.clone.h5.6",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t045\\Rb87_BKT_128.clone.h5.6",
           "size": 88914746,
           "mtime_ns": 1792382872667270800
         },
         {
           "rank": 7,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t045\\Rb87_BKT_128.clone.h5.7",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t045\\Rb87_BKT_128.clone.h5.7",
           "size": 141085138,
           "mtime_ns": 1792382872776659900
         }
@@ -206,49 +206,49 @@
       "sources": [
         {
           "rank": 0,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t052\\Rb87_BKT_128.clone.h5",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t052\\Rb87_BKT_128.clone.h5",
           "size": 267082648,
           "mtime_ns": 1792378315459682800
         },
         {
           "rank": 1,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t052\\Rb87_BKT_128.clone.h5.1",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t052\\Rb87_BKT_128.clone.h5.1",
           "size": 190007592,
           "mtime_ns": 1792378313271910100
         },
         {
           "rank": 2,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t052\\Rb87_BKT_128.clone.h5.2",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t052\\Rb87_BKT_128.clone.h5.2",
           "size": 221990156,
           "mtime_ns": 1792378316037803500
         },
         {
           "rank": 3,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t052\\Rb87_BKT_128.clone.h5.3",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t052\\Rb87_BKT_128.clone.h5.3",
           "size": 276520440,
           "mtime_ns": 1792378313428137300
         },
         {
           "rank": 4,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t052\\Rb87_BKT_128.clone.h5.4",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t052\\Rb87_BKT_128.clone.h5.4",
           "size": 214912816,
           "mtime_ns": 1792378315990937500
         },
         {
           "rank": 5,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t052\\Rb87_BKT_128.clone.h5.5",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t052\\Rb87_BKT_128.clone.h5.5",
           "size": 210194208,
           "mtime_ns": 1792378312912523300
         },
         {
           "rank": 6,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t052\\Rb87_BKT_128.clone.h5.6",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t052\\Rb87_BKT_128.clone.h5.6",
           "size": 217272208,
           "mtime_ns": 1792378312990641900
         },
         {
           "rank": 7,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t052\\Rb87_BKT_128.clone.h5.7",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t052\\Rb87_BKT_128.clone.h5.7",
           "size": 242176968,
           "mtime_ns": 1792378314787813500
         }
@@ -268,49 +268,49 @@
       "sources": [
         {
           "rank": 0,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t060\\Rb87_BKT_128.clone.h5",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t060\\Rb87_BKT_128.clone.h5",
           "size": 332155144,
           "mtime_ns": 1792435088340042000
         },
         {
           "rank": 1,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t060\\Rb87_BKT_128.clone.h5.1",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t060\\Rb87_BKT_128.clone.h5.1",
           "size": 304890496,
           "mtime_ns": 1792435088840024500
         },
         {
           "rank": 2,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t060\\Rb87_BKT_128.clone.h5.2",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t060\\Rb87_BKT_128.clone.h5.2",
           "size": 334510104,
           "mtime_ns": 1792435088340042000
         },
         {
           "rank": 3,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t060\\Rb87_BKT_128.clone.h5.3",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t060\\Rb87_BKT_128.clone.h5.3",
           "size": 339232004,
           "mtime_ns": 1792435088340042000
         },
         {
           "rank": 4,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t060\\Rb87_BKT_128.clone.h5.4",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t060\\Rb87_BKT_128.clone.h5.4",
           "size": 270547368,
           "mtime_ns": 1792435089918149700
         },
         {
           "rank": 5,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t060\\Rb87_BKT_128.clone.h5.5",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t060\\Rb87_BKT_128.clone.h5.5",
           "size": 346311784,
           "mtime_ns": 1792435089793162600
         },
         {
           "rank": 6,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t060\\Rb87_BKT_128.clone.h5.6",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t060\\Rb87_BKT_128.clone.h5.6",
           "size": 346311568,
           "mtime_ns": 1792435088324461100
         },
         {
           "rank": 7,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t060\\Rb87_BKT_128.clone.h5.7",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t060\\Rb87_BKT_128.clone.h5.7",
           "size": 275266360,
           "mtime_ns": 1792435089933775500
         }
@@ -330,49 +330,49 @@
       "sources": [
         {
           "rank": 0,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t070\\Rb87_BKT_128.clone.h5",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t070\\Rb87_BKT_128.clone.h5",
           "size": 411364824,
           "mtime_ns": 1792486164579605100
         },
         {
           "rank": 1,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t070\\Rb87_BKT_128.clone.h5.1",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t070\\Rb87_BKT_128.clone.h5.1",
           "size": 342682168,
           "mtime_ns": 1792486162579659700
         },
         {
           "rank": 2,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t070\\Rb87_BKT_128.clone.h5.2",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t070\\Rb87_BKT_128.clone.h5.2",
           "size": 365228008,
           "mtime_ns": 1792486162579659700
         },
         {
           "rank": 3,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t070\\Rb87_BKT_128.clone.h5.3",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t070\\Rb87_BKT_128.clone.h5.3",
           "size": 487132548,
           "mtime_ns": 1792486163173444400
         },
         {
           "rank": 4,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t070\\Rb87_BKT_128.clone.h5.4",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t070\\Rb87_BKT_128.clone.h5.4",
           "size": 362868656,
           "mtime_ns": 1792486163814039100
         },
         {
           "rank": 5,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t070\\Rb87_BKT_128.clone.h5.5",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t070\\Rb87_BKT_128.clone.h5.5",
           "size": 330885256,
           "mtime_ns": 1792486165064011900
         },
         {
           "rank": 6,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t070\\Rb87_BKT_128.clone.h5.6",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t070\\Rb87_BKT_128.clone.h5.6",
           "size": 335600512,
           "mtime_ns": 1792486164563998200
         },
         {
           "rank": 7,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l128t070\\Rb87_BKT_128.clone.h5.7",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l128t070\\Rb87_BKT_128.clone.h5.7",
           "size": 484769584,
           "mtime_ns": 1792486162579659700
         }
@@ -392,49 +392,49 @@
       "sources": [
         {
           "rank": 0,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l64t060\\Rb87_BKT_64.clone.h5",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l64t060\\Rb87_BKT_64.clone.h5",
           "size": 41680139,
           "mtime_ns": 1792396906007721200
         },
         {
           "rank": 1,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l64t060\\Rb87_BKT_64.clone.h5.1",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l64t060\\Rb87_BKT_64.clone.h5.1",
           "size": 31223136,
           "mtime_ns": 1792396905913955100
         },
         {
           "rank": 2,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l64t060\\Rb87_BKT_64.clone.h5.2",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l64t060\\Rb87_BKT_64.clone.h5.2",
           "size": 24405896,
           "mtime_ns": 1792396905632688500
         },
         {
           "rank": 3,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l64t060\\Rb87_BKT_64.clone.h5.3",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l64t060\\Rb87_BKT_64.clone.h5.3",
           "size": 39810640,
           "mtime_ns": 1792396905882700100
         },
         {
           "rank": 4,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l64t060\\Rb87_BKT_64.clone.h5.4",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l64t060\\Rb87_BKT_64.clone.h5.4",
           "size": 31223328,
           "mtime_ns": 1792396905898321600
         },
         {
           "rank": 5,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l64t060\\Rb87_BKT_64.clone.h5.5",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l64t060\\Rb87_BKT_64.clone.h5.5",
           "size": 18276947,
           "mtime_ns": 1792396905851438000
         },
         {
           "rank": 6,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l64t060\\Rb87_BKT_64.clone.h5.6",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l64t060\\Rb87_BKT_64.clone.h5.6",
           "size": 31813256,
           "mtime_ns": 1792396905710817000
         },
         {
           "rank": 7,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l64t060\\Rb87_BKT_64.clone.h5.7",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l64t060\\Rb87_BKT_64.clone.h5.7",
           "size": 24995680,
           "mtime_ns": 1792396905554569600
         }
@@ -454,49 +454,49 @@
       "sources": [
         {
           "rank": 0,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l64t070\\Rb87_BKT_64.clone.h5",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l64t070\\Rb87_BKT_64.clone.h5",
           "size": 27658888,
           "mtime_ns": 1792462356182447000
         },
         {
           "rank": 1,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l64t070\\Rb87_BKT_64.clone.h5.1",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l64t070\\Rb87_BKT_64.clone.h5.1",
           "size": 46013440,
           "mtime_ns": 1792462356729311500
         },
         {
           "rank": 2,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l64t070\\Rb87_BKT_64.clone.h5.2",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l64t070\\Rb87_BKT_64.clone.h5.2",
           "size": 43649079,
           "mtime_ns": 1792462356713703500
         },
         {
           "rank": 3,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l64t070\\Rb87_BKT_64.clone.h5.3",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l64t070\\Rb87_BKT_64.clone.h5.3",
           "size": 35651743,
           "mtime_ns": 1792462356729311500
         },
         {
           "rank": 4,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l64t070\\Rb87_BKT_64.clone.h5.4",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l64t070\\Rb87_BKT_64.clone.h5.4",
           "size": 27064431,
           "mtime_ns": 1792462356479329900
         },
         {
           "rank": 5,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l64t070\\Rb87_BKT_64.clone.h5.5",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l64t070\\Rb87_BKT_64.clone.h5.5",
           "size": 35061775,
           "mtime_ns": 1792462356448079200
         },
         {
           "rank": 6,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l64t070\\Rb87_BKT_64.clone.h5.6",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l64t070\\Rb87_BKT_64.clone.h5.6",
           "size": 35655644,
           "mtime_ns": 1792462356698077900
         },
         {
           "rank": 7,
-          "path": "\\\\alfs1.physics.ox.ac.uk\\al\\kuo\\projects\\worm\\results\\clean_Rb87\\l64t070\\Rb87_BKT_64.clone.h5.7",
+          "path": "C:/Users/kuo/projects/worm\\results\\clean_Rb87\\l64t070\\Rb87_BKT_64.clone.h5.7",
           "size": 44239039,
           "mtime_ns": 1792462356713703500
         }
